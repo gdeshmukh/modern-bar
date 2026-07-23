@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.modernbar"
+          path="/org/gnome/shell/extensions/modernbar/">
+
+    <!-- ── Workday metric ─────────────────────────────────────────────── -->
+    <key name="work-start" type="s">
+      <default>'09:00'</default>
+      <summary>Work day start time</summary>
+      <description>Start of the work day, "HH:MM" 24-hour. Workday % counts from here.</description>
+    </key>
+
+    <key name="work-end" type="s">
+      <default>'17:00'</default>
+      <summary>Work day end time</summary>
+      <description>End of the work day, "HH:MM" 24-hour. The metric hides outside these hours.</description>
+    </key>
+
+    <key name="show-workday" type="b">
+      <default>true</default>
+      <summary>Show the Workday % metric</summary>
+      <description>Master toggle for the Workday percentage indicator.</description>
+    </key>
+
+    <!-- ── Weather metric ─────────────────────────────────────────────── -->
+    <key name="location-label" type="s">
+      <default>'San Ramon'</default>
+      <summary>Location display/search name</summary>
+      <description>City name shown/searched. Geocoded to coordinates when changed in prefs.</description>
+    </key>
+
+    <key name="latitude" type="d">
+      <default>37.77993</default>
+      <summary>Weather latitude</summary>
+      <description>Latitude used for the Open-Meteo weather query.</description>
+    </key>
+
+    <key name="longitude" type="d">
+      <default>-121.97802</default>
+      <summary>Weather longitude</summary>
+      <description>Longitude used for the Open-Meteo weather query.</description>
+    </key>
+
+    <key name="temperature-unit" type="s">
+      <choices>
+        <choice value="fahrenheit"/>
+        <choice value="celsius"/>
+      </choices>
+      <default>'fahrenheit'</default>
+      <summary>Temperature unit</summary>
+      <description>Unit for the weather readout: fahrenheit or celsius.</description>
+    </key>
+
+    <key name="weather-refresh-minutes" type="i">
+      <range min="5" max="180"/>
+      <default>20</default>
+      <summary>Weather refresh interval (minutes)</summary>
+      <description>How often to re-fetch weather from Open-Meteo.</description>
+    </key>
+
+    <key name="show-weather" type="b">
+      <default>true</default>
+      <summary>Show the Weather metric</summary>
+      <description>Master toggle for the weather indicator.</description>
+    </key>
+
+    <!-- ── CPU metric ─────────────────────────────────────────────────── -->
+    <key name="show-cpu" type="b">
+      <default>true</default>
+      <summary>Show the CPU % metric</summary>
+      <description>Master toggle for the CPU percentage indicator.</description>
+    </key>
+
+    <key name="cpu-refresh-seconds" type="i">
+      <range min="1" max="10"/>
+      <default>3</default>
+      <summary>CPU sample interval (seconds)</summary>
+      <description>How often to sample /proc/stat for the CPU percentage.</description>
+    </key>
+
+    <key name="cpu-warn-percent" type="i">
+      <range min="50" max="100"/>
+      <default>90</default>
+      <summary>CPU warning threshold (percent)</summary>
+      <description>At or above this CPU %, the value flares Clu-orange as an alert.</description>
+    </key>
+
+  </schema>
+</schemalist>

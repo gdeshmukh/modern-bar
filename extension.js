@@ -1,15 +1,24 @@
 // modern-bar — extension.js
 //
-// Phase 1: theme only. The real visual work lives in stylesheet.css, which
-// GNOME loads automatically for any enabled extension. This file only:
+// Lifecycle + wiring. The panel look lives in stylesheet.css (auto-loaded).
+// This file:
 //   1. tags #panel with CSS classes so the look can be toggled from here
 //   2. hides the app-indicator (tray) area, which is a JS-side concern
-//   3. hides the Activities button (Super key still opens the Overview)
+//   3. collapses the Activities button (Super key still opens the Overview)
+//   4. Phase 2: mounts the metrics cluster (CPU / Workday / Weather) on the
+//      LEFT, where Activities was; each reads config from GSettings and tears
+//      down its own timers/signals. This file owns their container.
 //
 // GNOME 45+ ES-module style only. No legacy imports.* patterns.
 
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import St from 'gi://St';
+import Clutter from 'gi://Clutter';
+
+import {CpuMetric} from './lib/cpuMetric.js';
+import {WorkdayMetric} from './lib/workdayMetric.js';
+import {WeatherMetric} from './lib/weatherMetric.js';
 
 // ── Look toggles ────────────────────────────────────────────────────────────
 // Flip this and re-toggle the extension to compare the panel with/without the
@@ -53,18 +62,67 @@ export default class ModernBarExtension extends Extension {
         this._childAddedId = this._rightBox.connect(
             'child-added', () => this._hideAppIndicators());
 
-        // 3. Hide the Activities button (far left). The Super key still opens
-        //    the Overview (mutter overlay-key = 'Super'), so nothing is lost.
-        //    Phase 2's metrics cluster will live in this freed-up left space.
+        // 3. Remove the Activities button from the layout (far left). The Super
+        //    key still opens the Overview (mutter overlay-key = 'Super'), so
+        //    nothing is lost. Phase 2's metrics cluster takes this left space.
+        //
+        //    We don't destroy() it — the shell owns that widget and other code
+        //    references it; destroying core panel widgets is fragile and gets
+        //    extensions rejected from e.g.o. Instead we fully collapse it: hide
+        //    AND zero its width so there is no leftover slot/gap under the
+        //    metrics. Fully reversed in disable().
         const activities = Main.panel.statusArea.activities;
         this._activitiesActor = activities?.container ?? activities;
-        if (this._activitiesActor && this._activitiesActor.visible) {
-            this._activitiesActor.visible = false;
-            this._activitiesWasHidden = true;
+        if (this._activitiesActor) {
+            this._activitiesActor.hide();
+            this._activitiesActor.width = 0;
+            // Belt-and-suspenders: keep it collapsed even if something re-shows
+            // it (some shell paths toggle visibility on the Activities button).
+            this._activitiesShownId = this._activitiesActor.connect(
+                'show', () => {
+                    this._activitiesActor.hide();
+                    this._activitiesActor.width = 0;
+                });
+            this._activitiesHidden = true;
         }
+
+        // 4. Metrics cluster on the LEFT (where Activities was). One container
+        //    holds the three indicators in order: CPU, Workday, Weather. Each
+        //    reads config from GSettings and manages its own timers.
+        this._settings = this.getSettings();
+
+        this._metricsBox = new St.BoxLayout({
+            style_class: 'modern-bar-metrics',
+            y_align: Clutter.ActorAlign.CENTER,
+            x_expand: false,
+        });
+
+        this._metrics = [
+            new CpuMetric(this._settings),
+            new WorkdayMetric(this._settings),
+            new WeatherMetric(this._settings),
+        ];
+        for (const m of this._metrics)
+            this._metricsBox.add_child(m);
+
+        // Insert at the start of the panel's left box (leftmost position).
+        Main.panel._leftBox.insert_child_at_index(this._metricsBox, 0);
     }
 
     disable() {
+        // Tear down the metrics cluster first (each metric stops its own timers
+        // and disconnects its own settings signals in destroy()).
+        if (this._metrics) {
+            for (const m of this._metrics)
+                m.destroy();
+            this._metrics = null;
+        }
+        if (this._metricsBox) {
+            this._metricsBox.destroy();
+            this._metricsBox = null;
+        }
+        this._settings = null;
+
         // Restore every indicator we hid.
         if (this._hiddenIndicators) {
             for (const actor of this._hiddenIndicators) {
@@ -82,13 +140,18 @@ export default class ModernBarExtension extends Extension {
         this._childAddedId = null;
         this._rightBox = null;
 
-        // Restore the Activities button.
-        if (this._activitiesWasHidden && this._activitiesActor &&
+        // Restore the Activities button fully: drop our 'show' guard, clear the
+        // forced width (-1 = natural), and show it again.
+        if (this._activitiesHidden && this._activitiesActor &&
             !this._activitiesActor.is_finalized?.()) {
-            this._activitiesActor.visible = true;
+            if (this._activitiesShownId)
+                this._activitiesActor.disconnect(this._activitiesShownId);
+            this._activitiesActor.width = -1;
+            this._activitiesActor.show();
         }
+        this._activitiesShownId = null;
         this._activitiesActor = null;
-        this._activitiesWasHidden = false;
+        this._activitiesHidden = false;
 
         // Remove our panel classes.
         Main.panel.remove_style_class_name(UNDERGLOW_CLASS);

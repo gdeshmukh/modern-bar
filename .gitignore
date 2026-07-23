@@ -1,6 +1,9 @@
 # Local project notes for Claude Code (kept out of the portfolio repo)
 CLAUDE.md
 
+# Personal dev-test helper (each user's nested-session setup differs)
+test_gnome.sh
+
 # Editor / OS cruft
 .vscode/
 .idea/
@@ -13,3 +16,7 @@ CLAUDE.md
 
 # gnome-extensions pack output
 dist/
+
+# Compiled GSettings schema — build artifact, regenerated from the .xml with
+# `glib-compile-schemas schemas/`. Source-of-truth is the .gschema.xml.
+schemas/gschemas.compiled

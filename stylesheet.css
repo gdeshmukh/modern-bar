@@ -49,6 +49,29 @@
     border-bottom: 2px solid #2ff0ff;
 }
 
+/* ── Metrics cluster (Phase 2, left side) ─────────────────────────────────── */
+/* Dim cyan like the rest of the panel; the whole cluster is spaced from the
+ * clock/system area. Orange is reserved for the .modern-bar-alert state only. */
+#panel.modern-bar .modern-bar-metrics {
+    spacing: 14px;
+    padding: 0 10px 0 6px;
+}
+
+#panel.modern-bar .modern-bar-metric {
+    color: #9fe8f0;
+    font-feature-settings: "tnum";   /* stop width jitter as digits change */
+}
+
+#panel.modern-bar .modern-bar-weather-icon {
+    icon-size: 15px;
+    color: #9fe8f0;
+}
+
+/* Alert state — the ONLY place orange appears (CPU at/above its threshold). */
+#panel.modern-bar .modern-bar-alert {
+    color: #ff8a4d;
+}
+
 /* Every label/clock/indicator in the panel inherits the panel font + tone. */
 #panel.modern-bar .panel-button {
     font-family: "JetBrains Mono", monospace;
