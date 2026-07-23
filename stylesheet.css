@@ -25,23 +25,22 @@
     box-shadow: none;
     font-family: "JetBrains Mono", monospace;
     font-size: 10.5pt;
-    color: #dff2f7;
+    /* Dim cyan at rest — reads as calm lit neon against the near-black panel.
+     * Hover/active push to bright cyan. This is the "glow" now that the
+     * under-line is off. */
+    color: #9fe8f0;
 }
 
-/* Optional faint 1px cyan under-glow. Toggled from extension.js (UNDERGLOW)
- * by adding/removing .modern-bar-underglow. Deliberately subtle — a hairline,
- * not a halo.
+/* Optional under-line. OFF by default (UNDERGLOW=false in extension.js) — the
+ * neon feel is carried by the cyan text/icons instead, which costs nothing and
+ * is more reliable. Kept here as an opt-in toggle only.
  *
- * PERF: implemented as a 1px border-bottom, NOT a box-shadow. St renders every
- * box-shadow as a blurred offscreen texture; a panel-width shadow gets
- * regenerated on every repaint (and the panel repaints ~1/sec because the clock
- * shows seconds), which spools up the GPU and causes hover lag. A border is
- * drawn directly and costs nothing. */
+ * Caveats if you re-enable it: (1) the stock GNOME theme tends to overdraw a
+ * panel-width bottom border, so this line may not show at all. (2) Do NOT make
+ * it a box-shadow — St renders shadows as blurred offscreen textures that get
+ * regenerated on every repaint (the panel repaints ~1/sec with clock seconds),
+ * which spools up the GPU and causes hover lag. A border is drawn directly. */
 #panel.modern-bar.modern-bar-underglow {
-    /* Full-saturation cyan at full opacity, 2px — reads as a bright neon wire
-     * to match the kitty terminal's border, without the GPU cost of a blurred
-     * glow. If this still feels flat, the next step is a small-radius box-shadow
-     * bloom AND dropping clock seconds so the panel stops repainting ~1/sec. */
     border-bottom: 2px solid #2ff0ff;
 }
 
@@ -49,7 +48,7 @@
 #panel.modern-bar .panel-button {
     font-family: "JetBrains Mono", monospace;
     font-size: 10.5pt;
-    color: #dff2f7;
+    color: #9fe8f0;   /* dim cyan at rest; bright cyan on hover/active below */
     /* Flat buttons: no rounded pill background at rest. */
     -natural-hpadding: 8px;
     -minimum-hpadding: 6px;
@@ -60,7 +59,7 @@
 #panel.modern-bar .clock-display .clock {
     font-family: "JetBrains Mono", monospace;
     font-size: 10.5pt;
-    color: #dff2f7;
+    color: #9fe8f0;   /* dim cyan at rest, matching the rest of the panel */
     font-feature-settings: "tnum";   /* tabular figures so the clock stops jitter */
 }
 

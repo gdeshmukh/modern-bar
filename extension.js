@@ -11,10 +11,14 @@ import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 // ── Look toggles ────────────────────────────────────────────────────────────
-// Flip this and re-toggle the extension to compare the faint 1px cyan
-// under-glow with/without. It just adds/removes a CSS class on #panel; the
-// glow itself is defined in stylesheet.css (.modern-bar-underglow).
-const UNDERGLOW = true;
+// Flip this and re-toggle the extension to compare the panel with/without the
+// under-line. It just adds/removes a CSS class on #panel; the line itself is
+// defined in stylesheet.css (.modern-bar-underglow).
+//
+// Off by default: the "glow" is carried by the cyan text/icons instead, which
+// costs nothing. The stock GNOME theme also tends to overdraw a panel-width
+// border, so the line was unreliable anyway.
+const UNDERGLOW = false;
 
 const PANEL_CLASS = 'modern-bar';
 const UNDERGLOW_CLASS = 'modern-bar-underglow';
