@@ -1,0 +1,154 @@
+/* ─────────────────────────────────────────────────────────────────────────
+ * modern-bar — stylesheet.css   (Phase 1: theme only)
+ *
+ * A sibling of the "ENCOM/Tron" kitty terminal: flat, frameless,
+ * neon-on-near-black. No gradients, no CRT gimmicks.
+ *
+ * Palette (kitty theme-day.conf):
+ *   background   #04070d      foreground   #dff2f7      dim text  #9fe8f0
+ *   cyan accent  #2ff0ff      cyan bright  #9dfaff
+ *   Clu orange   #ff8a4d / #ff6a2f   — WARNINGS/ALERTS ONLY, never decoration
+ *
+ * Design rules honored here:
+ *   - Panel bg rgba(4,7,13,0.88), flat, faint optional 1px cyan under-glow.
+ *   - JetBrains Mono ~10.5pt across the whole panel.
+ *   - Hover/active/checked -> cyan. Nothing orange unless it's an alert.
+ *   - Quick Settings popup internals are NOT touched (rule 5). We restyle the
+ *     panel button chrome only, and exclude .quick-settings from popup theming.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+/* ── The panel itself ─────────────────────────────────────────────────────── */
+#panel.modern-bar {
+    background-color: rgba(4, 7, 13, 0.88);
+    /* Flat. No gradient, no border, no box-shadow by default. */
+    border: none;
+    box-shadow: none;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5pt;
+    color: #dff2f7;
+}
+
+/* Optional faint 1px cyan under-glow. Toggled from extension.js (UNDERGLOW)
+ * by adding/removing .modern-bar-underglow. Deliberately subtle — a hairline,
+ * not a halo. */
+#panel.modern-bar.modern-bar-underglow {
+    box-shadow: inset 0 -1px 0 0 rgba(47, 240, 255, 0.35);
+}
+
+/* Every label/clock/indicator in the panel inherits the panel font + tone. */
+#panel.modern-bar .panel-button {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5pt;
+    color: #dff2f7;
+    /* Flat buttons: no rounded pill background at rest. */
+    -natural-hpadding: 8px;
+    -minimum-hpadding: 6px;
+}
+
+/* The clock label specifically (12h + seconds + AM/PM set via gsettings). */
+#panel.modern-bar .clock-display,
+#panel.modern-bar .clock-display .clock {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10.5pt;
+    color: #dff2f7;
+    font-feature-settings: "tnum";   /* tabular figures so the clock stops jitter */
+}
+
+/* ── Panel button states -> cyan ──────────────────────────────────────────── */
+/* These target panel chrome only (the buttons sitting IN the top bar). They do
+ * not reach inside any popup. Safe for the Quick Settings button too — this
+ * styles its on-panel chrome, not the popup it opens. */
+#panel.modern-bar .panel-button:hover,
+#panel.modern-bar .panel-button:focus {
+    color: #9dfaff;
+    background-color: rgba(47, 240, 255, 0.10);
+    box-shadow: none;
+}
+
+#panel.modern-bar .panel-button:active,
+#panel.modern-bar .panel-button:overview,
+#panel.modern-bar .panel-button:checked {
+    color: #2ff0ff;
+    background-color: rgba(47, 240, 255, 0.18);
+    box-shadow: none;
+}
+
+/* Focus outline, if any, in cyan rather than Adwaita blue. */
+#panel.modern-bar .panel-button:focus {
+    outline: none;
+}
+
+/* ── Popup menus that hang off the panel ──────────────────────────────────── */
+/* Calendar/date menu, indicator menus, etc. Restyle so stock Adwaita doesn't
+ * leak through.
+ *
+ * IMPORTANT (rule 5): we must NOT restyle the Quick Settings popup internals.
+ * GNOME's QS popup uses .quick-settings; the :not(.quick-settings) guards and
+ * the specific .calendar / .datemenu scoping below keep us clear of it. */
+
+.popup-menu.modern-bar-scope {
+    /* placeholder for future explicit opt-in scoping; unused in Phase 1 */
+}
+
+/* Calendar / date-menu popup (the clock's dropdown). */
+#calendarArea,
+.datemenu-popup .popup-menu-content,
+.calendar,
+.message-list {
+    background-color: #04070d;
+    color: #dff2f7;
+    border: 1px solid rgba(47, 240, 255, 0.20);
+}
+
+/* Generic panel popup menu boxes — but never Quick Settings. */
+.popup-menu:not(.quick-settings) .popup-menu-content {
+    background-color: #04070d;
+    color: #dff2f7;
+    border: 1px solid rgba(47, 240, 255, 0.20);
+}
+
+/* Popup menu items: cyan selection instead of Adwaita blue. */
+.popup-menu:not(.quick-settings) .popup-menu-item:hover,
+.popup-menu:not(.quick-settings) .popup-menu-item:focus,
+.popup-menu:not(.quick-settings) .popup-menu-item.selected {
+    background-color: rgba(47, 240, 255, 0.15);
+    color: #9dfaff;
+}
+
+.popup-menu:not(.quick-settings) .popup-menu-item:active {
+    background-color: rgba(47, 240, 255, 0.22);
+    color: #2ff0ff;
+}
+
+/* Calendar cells: cyan for today / selection, not blue. */
+.calendar .calendar-today,
+.calendar .calendar-day-base:hover,
+.calendar .calendar-day-base:focus {
+    color: #2ff0ff;
+    background-color: rgba(47, 240, 255, 0.12);
+    border-color: rgba(47, 240, 255, 0.35);
+}
+
+.calendar .calendar-day-base:selected {
+    background-color: rgba(47, 240, 255, 0.20);
+    color: #9dfaff;
+    border-color: #2ff0ff;
+}
+
+/* Message list (notifications inside the calendar popup): keep on-palette. */
+.message-list .message {
+    background-color: rgba(47, 240, 255, 0.04);
+    color: #dff2f7;
+}
+
+.message-list .message:hover,
+.message-list .message:focus {
+    background-color: rgba(47, 240, 255, 0.12);
+}
+
+/* World-clocks / weather sections in the date menu, kept on-palette. */
+.datemenu-popup .world-clocks-button,
+.datemenu-popup .weather-button {
+    background-color: rgba(47, 240, 255, 0.04);
+    color: #dff2f7;
+}

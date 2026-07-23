@@ -1,0 +1,15 @@
+# Local project notes for Claude Code (kept out of the portfolio repo)
+CLAUDE.md
+
+# Editor / OS cruft
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+
+# Packaged extension zips
+*.zip
+
+# gnome-extensions pack output
+dist/
