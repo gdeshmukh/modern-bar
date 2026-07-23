@@ -4,6 +4,7 @@
 // GNOME loads automatically for any enabled extension. This file only:
 //   1. tags #panel with CSS classes so the look can be toggled from here
 //   2. hides the app-indicator (tray) area, which is a JS-side concern
+//   3. hides the Activities button (Super key still opens the Overview)
 //
 // GNOME 45+ ES-module style only. No legacy imports.* patterns.
 
@@ -51,6 +52,16 @@ export default class ModernBarExtension extends Extension {
         this._rightBox = Main.panel._rightBox;
         this._childAddedId = this._rightBox.connect(
             'child-added', () => this._hideAppIndicators());
+
+        // 3. Hide the Activities button (far left). The Super key still opens
+        //    the Overview (mutter overlay-key = 'Super'), so nothing is lost.
+        //    Phase 2's metrics cluster will live in this freed-up left space.
+        const activities = Main.panel.statusArea.activities;
+        this._activitiesActor = activities?.container ?? activities;
+        if (this._activitiesActor && this._activitiesActor.visible) {
+            this._activitiesActor.visible = false;
+            this._activitiesWasHidden = true;
+        }
     }
 
     disable() {
@@ -70,6 +81,14 @@ export default class ModernBarExtension extends Extension {
         }
         this._childAddedId = null;
         this._rightBox = null;
+
+        // Restore the Activities button.
+        if (this._activitiesWasHidden && this._activitiesActor &&
+            !this._activitiesActor.is_finalized?.()) {
+            this._activitiesActor.visible = true;
+        }
+        this._activitiesActor = null;
+        this._activitiesWasHidden = false;
 
         // Remove our panel classes.
         Main.panel.remove_style_class_name(UNDERGLOW_CLASS);
