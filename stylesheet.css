@@ -38,7 +38,11 @@
  * shows seconds), which spools up the GPU and causes hover lag. A border is
  * drawn directly and costs nothing. */
 #panel.modern-bar.modern-bar-underglow {
-    border-bottom: 1px solid rgba(47, 240, 255, 0.35);
+    /* Full-saturation cyan at full opacity, 2px — reads as a bright neon wire
+     * to match the kitty terminal's border, without the GPU cost of a blurred
+     * glow. If this still feels flat, the next step is a small-radius box-shadow
+     * bloom AND dropping clock seconds so the panel stops repainting ~1/sec. */
+    border-bottom: 2px solid #2ff0ff;
 }
 
 /* Every label/clock/indicator in the panel inherits the panel font + tone. */
