@@ -15,10 +15,11 @@
  *   - JetBrains Mono ~10.5pt across the whole panel.
  *   - Hover/active/checked -> cyan. Nothing orange unless it's an alert.
  *
- * NOTE ON QUICK SETTINGS: the original design rule #5 said "don't touch Quick
- * Settings." The user later chose to override that, so QS IS now themed to match
- * (see the Quick Settings block at the bottom). QS internals are finicky and can
- * shift across GNOME releases — that block is the most likely to need upkeep.
+ * NOTE ON QUICK SETTINGS: left STOCK (default Adwaita). We tried theming it and
+ * it looked bad — GNOME 50 builds QS toggles from a compiled multi-layer accent
+ * fill that a flat extension override can't cleanly replace (purple bleed on the
+ * edges). Reverted; may revisit later. The :not(.quick-settings) guards below
+ * keep our other popup rules from leaking into it.
  * ───────────────────────────────────────────────────────────────────────── */
 
 /* ── The panel itself ─────────────────────────────────────────────────────── */
@@ -76,11 +77,13 @@
 /* These target panel chrome only (the buttons sitting IN the top bar). They do
  * not reach inside any popup. Safe for the Quick Settings button too — this
  * styles its on-panel chrome, not the popup it opens. */
+/* No box/pill behind panel buttons in any state — the feedback is purely the
+ * text/icon brightening to cyan. Keep the background transparent so nothing
+ * draws behind the glyph. */
 #panel.modern-bar .panel-button:hover,
 #panel.modern-bar .panel-button:focus {
     color: #9dfaff;
-    background-color: rgba(47, 240, 255, 0.10);
-    border-radius: 0;   /* square highlight, matching the flat no-pill rest state */
+    background-color: transparent;
     box-shadow: none;
 }
 
@@ -88,8 +91,7 @@
 #panel.modern-bar .panel-button:overview,
 #panel.modern-bar .panel-button:checked {
     color: #2ff0ff;
-    background-color: rgba(47, 240, 255, 0.18);
-    border-radius: 0;
+    background-color: transparent;
     box-shadow: none;
 }
 
@@ -172,106 +174,3 @@
     background-color: rgba(47, 240, 255, 0.04);
     color: #dff2f7;
 }
-
-/* ─────────────────────────────────────────────────────────────────────────
- * QUICK SETTINGS  (right-side dropdown)
- *
- * Overrides the original "leave QS alone" rule at the user's request. GNOME 50
- * builds QS accents from a compiled -st-accent-color (via st-mix()), which an
- * extension stylesheet can't reassign — so we set explicit cyan colors and use
- * !important where we must beat stock :checked / .default specificity.
- *
- * We recolor only; we do NOT reshape (keep GNOME's 36px/20px radii) to avoid
- * clipping surprises. Most likely block to need upkeep on a GNOME upgrade.
- * ───────────────────────────────────────────────────────────────────────── */
-
-/* The popup surface. */
-.quick-settings .popup-menu-content,
-.quick-settings.popup-menu-content {
-    background-color: #04070d;
-    color: #9fe8f0;
-    border: 1px solid rgba(47, 240, 255, 0.20);
-}
-
-/* Toggle tiles (Wi-Fi, Bluetooth, …) at rest: flat dark, dim-cyan text/icon. */
-.quick-settings .quick-toggle,
-.quick-settings .quick-toggle.button,
-.quick-settings .quick-slider {
-    background-color: rgba(47, 240, 255, 0.06);
-    color: #9fe8f0;
-    box-shadow: none;
-}
-
-.quick-settings .quick-toggle .quick-toggle-icon,
-.quick-settings .quick-toggle-title,
-.quick-settings .quick-toggle-subtitle {
-    color: #9fe8f0;
-}
-
-/* Hover on a toggle -> brighter cyan wash. */
-.quick-settings .quick-toggle:hover,
-.quick-settings .quick-toggle.button:hover,
-.quick-settings .quick-slider:hover {
-    background-color: rgba(47, 240, 255, 0.14);
-    color: #9dfaff;
-}
-
-/* Checked / "on" toggle -> solid cyan, dark glyph (replaces the blue accent). */
-.quick-settings .quick-toggle:checked,
-.quick-settings .quick-toggle.button:checked {
-    background-color: #2ff0ff !important;
-    color: #04070d !important;
-}
-
-.quick-settings .quick-toggle:checked .quick-toggle-icon,
-.quick-settings .quick-toggle:checked .quick-toggle-title,
-.quick-settings .quick-toggle:checked .quick-toggle-subtitle {
-    color: #04070d !important;
-}
-
-/* The little "expand menu" arrow button attached to a toggle. */
-.quick-settings .quick-toggle-has-menu .quick-toggle-arrow,
-.quick-settings .icon-button {
-    color: #9fe8f0;
-}
-
-.quick-settings .quick-toggle-has-menu .quick-toggle-arrow:hover,
-.quick-settings .icon-button:hover {
-    color: #9dfaff;
-    background-color: rgba(47, 240, 255, 0.14);
-}
-
-/* Sliders (brightness, volume): cyan fill, dark trough. */
-.quick-settings .slider {
-    color: #2ff0ff;                  /* filled portion */
-    -barlevel-background: rgba(47, 240, 255, 0.15);   /* unfilled trough */
-    -barlevel-active-background: #2ff0ff;
-    -slider-handle-radius: 0;        /* flat handle, on-theme */
-}
-
-/* Sub-menus that expand from a toggle (e.g. pick a Wi-Fi network). */
-.quick-toggle-menu {
-    background-color: #04070d;
-    color: #9fe8f0;
-    border: 1px solid rgba(47, 240, 255, 0.20);
-}
-
-.quick-toggle-menu .popup-menu-item:hover,
-.quick-toggle-menu .popup-menu-item:focus {
-    background-color: rgba(47, 240, 255, 0.14);
-    color: #9dfaff;
-}
-
-.quick-toggle-menu .popup-menu-item:checked,
-.quick-toggle-menu .popup-menu-item.selected {
-    color: #2ff0ff;
-}
-
-.quick-toggle-menu .header .title,
-.quick-toggle-menu .header .subtitle {
-    color: #9fe8f0;
-}
-
-/* The system action buttons at the bottom (settings/lock/power) sit as
- * .icon-button inside .quick-settings; covered by the .icon-button rules above.
- * The user avatar / brightness label inherit the popup color. */
