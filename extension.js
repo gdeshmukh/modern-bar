@@ -42,10 +42,11 @@ export default class ModernBarExtension extends Extension {
         this._hideAppIndicators();
 
         // App-indicators can appear after login (DBus is async), so keep
-        // watching the panel's right box for late arrivals.
+        // watching the panel's right box for late arrivals. In GNOME 50 the
+        // Clutter signal is 'child-added' (not the old 'actor-added').
         this._rightBox = Main.panel._rightBox;
-        this._actorAddedId = this._rightBox.connect(
-            'actor-added', () => this._hideAppIndicators());
+        this._childAddedId = this._rightBox.connect(
+            'child-added', () => this._hideAppIndicators());
     }
 
     disable() {
@@ -60,10 +61,10 @@ export default class ModernBarExtension extends Extension {
             this._hiddenIndicators = null;
         }
 
-        if (this._rightBox && this._actorAddedId) {
-            this._rightBox.disconnect(this._actorAddedId);
+        if (this._rightBox && this._childAddedId) {
+            this._rightBox.disconnect(this._childAddedId);
         }
-        this._actorAddedId = null;
+        this._childAddedId = null;
         this._rightBox = null;
 
         // Remove our panel classes.
