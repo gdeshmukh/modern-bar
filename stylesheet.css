@@ -30,9 +30,15 @@
 
 /* Optional faint 1px cyan under-glow. Toggled from extension.js (UNDERGLOW)
  * by adding/removing .modern-bar-underglow. Deliberately subtle — a hairline,
- * not a halo. */
+ * not a halo.
+ *
+ * PERF: implemented as a 1px border-bottom, NOT a box-shadow. St renders every
+ * box-shadow as a blurred offscreen texture; a panel-width shadow gets
+ * regenerated on every repaint (and the panel repaints ~1/sec because the clock
+ * shows seconds), which spools up the GPU and causes hover lag. A border is
+ * drawn directly and costs nothing. */
 #panel.modern-bar.modern-bar-underglow {
-    box-shadow: inset 0 -1px 0 0 rgba(47, 240, 255, 0.35);
+    border-bottom: 1px solid rgba(47, 240, 255, 0.35);
 }
 
 /* Every label/clock/indicator in the panel inherits the panel font + tone. */
