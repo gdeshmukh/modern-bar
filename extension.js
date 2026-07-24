@@ -83,11 +83,14 @@ export default class ModernBarExtension extends Extension {
             x_expand: false,
         });
 
+        // Custom symbolic icons (briefcase, Claude mark) are bundled in icons/;
+        // pass the dir so those metrics can build Gio.FileIcons from it.
+        const iconsPath = `${this.path}/icons`;
         this._metrics = [
             new CpuMetric(this._settings),
-            new WorkdayMetric(this._settings),
+            new WorkdayMetric(this._settings, iconsPath),
             new WeatherMetric(this._settings),
-            new ClaudeMetric(this._settings),
+            new ClaudeMetric(this._settings, iconsPath),
         ];
         for (const m of this._metrics)
             this._metricsBox.add_child(m);

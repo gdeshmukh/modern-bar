@@ -66,18 +66,23 @@
     font-feature-settings: "tnum";   /* stop width jitter as digits change */
 }
 
-#panel.modern-bar .modern-bar-weather-icon {
+/* Symbolic metric glyphs (weather, briefcase, Claude mark) — monochrome SVGs
+ * tinted to the panel's dim cyan. A hair of right padding separates glyph from
+ * the number next to it. */
+#panel.modern-bar .modern-bar-weather-icon,
+#panel.modern-bar .modern-bar-metric-icon {
     icon-size: 15px;
     color: #9fe8f0;
+    padding-right: 2px;
 }
 
 /* Hover feedback: text/icon brighten to deep cyan, matching the clock. The
- * metrics are reactive (see lib/*Metric.js) so :hover fires. The label text is a
- * child that doesn't inherit the box's hover color, so it carries its own class
- * (.modern-bar-metric-label) that we target directly. Cosmetic focus cue for
- * now; clicking does nothing yet. */
+ * metrics are reactive (see lib/*Metric.js) so :hover fires. The label text and
+ * icon are children that don't inherit the box's hover color, so they carry
+ * their own classes that we target directly. Cosmetic focus cue for now. */
 #panel.modern-bar .modern-bar-metric:hover .modern-bar-metric-label,
-#panel.modern-bar .modern-bar-metric:hover .modern-bar-weather-icon {
+#panel.modern-bar .modern-bar-metric:hover .modern-bar-weather-icon,
+#panel.modern-bar .modern-bar-metric:hover .modern-bar-metric-icon {
     color: #2ff0ff;   /* deep cyan */
 }
 
