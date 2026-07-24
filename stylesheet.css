@@ -1,5 +1,5 @@
 /* ─────────────────────────────────────────────────────────────────────────
- * modern-bar — stylesheet.css   (Phase 1: theme only)
+ * modern-bar — stylesheet.css
  *
  * A sibling of the "ENCOM/Tron" kitty terminal: flat, frameless,
  * neon-on-near-black. No gradients, no CRT gimmicks.
@@ -62,7 +62,7 @@
 
 #panel.modern-bar .modern-bar-metric {
     color: #9fe8f0;
-    font-weight: 300;                /* lighter than the panel default; less heavy */
+    font-weight: 400;                /* regular — a touch back up from 300 */
     font-feature-settings: "tnum";   /* stop width jitter as digits change */
 }
 
@@ -114,19 +114,22 @@
     font-feature-settings: "tnum";   /* tabular figures so the clock stops jitter */
 }
 
-/* The clock is a .panel-button whose INNER .clock-display box draws its own
- * rounded hover/active highlight (the "weird white pill" outline). The generic
- * .panel-button override doesn't reach this inner box, so kill it explicitly in
- * every state — no bg, no border, no shadow; feedback is just the cyan text. */
-#panel.modern-bar .clock-display,
-#panel.modern-bar .panel-button:hover .clock-display,
-#panel.modern-bar .panel-button:focus .clock-display,
-#panel.modern-bar .panel-button:active .clock-display,
-#panel.modern-bar .panel-button:checked .clock-display {
-    background-color: transparent;
-    border: none;
-    border-radius: 0;
-    box-shadow: none;
+/* The "weird white pill" on clock hover is the stock theme's
+ *   #panel .panel-button:hover { box-shadow: inset 0 0 0 100px rgba(255,255,255,.17) }
+ * (a 100px inset spread that fills the button), and the clock has its own
+ * .panel-button.clock-display rule with border-radius:999px giving it the pill
+ * shape. The clock is a COMPOUND selector (.panel-button.clock-display), not a
+ * descendant, so it needs its own override. Kill the shadow/border in all
+ * states; !important beats the stock clock-specific rule's specificity. */
+#panel.modern-bar .panel-button.clock-display,
+#panel.modern-bar .panel-button.clock-display:hover,
+#panel.modern-bar .panel-button.clock-display:focus,
+#panel.modern-bar .panel-button.clock-display:active,
+#panel.modern-bar .panel-button.clock-display:checked {
+    background-color: transparent !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
 }
 
 /* ── Panel button states -> cyan ──────────────────────────────────────────── */
@@ -139,16 +142,15 @@
 #panel.modern-bar .panel-button:hover,
 #panel.modern-bar .panel-button:focus {
     color: #9dfaff;
-    background-color: transparent;
-    box-shadow: none;
+    background-color: transparent !important;
+    box-shadow: none !important;   /* kill the stock inset-100px white pill */
 }
 
 #panel.modern-bar .panel-button:active,
-#panel.modern-bar .panel-button:overview,
 #panel.modern-bar .panel-button:checked {
     color: #2ff0ff;
-    background-color: transparent;
-    box-shadow: none;
+    background-color: transparent !important;
+    box-shadow: none !important;
 }
 
 /* Focus outline, if any, in cyan rather than Adwaita blue. */

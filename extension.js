@@ -5,9 +5,9 @@
 //   1. tags #panel with CSS classes so the look can be toggled from here
 //   2. hides the app-indicator (tray) area, which is a JS-side concern
 //   3. collapses the Activities button (Super key still opens the Overview)
-//   4. Phase 2: mounts the metrics cluster (CPU / Workday / Weather) on the
-//      LEFT, where Activities was; each reads config from GSettings and tears
-//      down its own timers/signals. This file owns their container.
+//   4. mounts the metrics cluster (CPU / Workday / Weather) on the LEFT, where
+//      Activities was; each reads config from GSettings and tears down its own
+//      timers/signals. This file owns their container.
 //
 // GNOME 45+ ES-module style only. No legacy imports.* patterns.
 
