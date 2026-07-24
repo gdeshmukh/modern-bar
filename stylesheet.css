@@ -114,18 +114,25 @@
     font-feature-settings: "tnum";   /* tabular figures so the clock stops jitter */
 }
 
-/* The "weird white pill" on clock hover is the stock theme's
- *   #panel .panel-button:hover { box-shadow: inset 0 0 0 100px rgba(255,255,255,.17) }
- * (a 100px inset spread that fills the button), and the clock has its own
- * .panel-button.clock-display rule with border-radius:999px giving it the pill
- * shape. The clock is a COMPOUND selector (.panel-button.clock-display), not a
- * descendant, so it needs its own override. Kill the shadow/border in all
- * states; !important beats the stock clock-specific rule's specificity. */
+/* The "weird white pill" on clock hover. The stock theme draws TWO stacked
+ * highlight layers, and the real pill is on the SECOND one — the inner `.clock`
+ * label, not the button:
+ *   #panel .panel-button.clock-display:hover        { box-shadow: inset 100px … }  (layer 1)
+ *   #panel .panel-button.clock-display:hover .clock { box-shadow: inset 100px … }  (layer 2)
+ * and `.clock-display .clock` carries `border-radius: 999px`, which is what
+ * gives it the rounded pill shape. Earlier overrides only hit layer 1, so the
+ * pill survived on the inner label. Kill BOTH the button and its .clock child,
+ * in every state. !important beats the stock clock-specific specificity. */
 #panel.modern-bar .panel-button.clock-display,
 #panel.modern-bar .panel-button.clock-display:hover,
 #panel.modern-bar .panel-button.clock-display:focus,
 #panel.modern-bar .panel-button.clock-display:active,
-#panel.modern-bar .panel-button.clock-display:checked {
+#panel.modern-bar .panel-button.clock-display:checked,
+#panel.modern-bar .panel-button.clock-display .clock,
+#panel.modern-bar .panel-button.clock-display:hover .clock,
+#panel.modern-bar .panel-button.clock-display:focus .clock,
+#panel.modern-bar .panel-button.clock-display:active .clock,
+#panel.modern-bar .panel-button.clock-display:checked .clock {
     background-color: transparent !important;
     border: none !important;
     border-radius: 0 !important;
