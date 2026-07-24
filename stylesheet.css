@@ -139,6 +139,20 @@
     box-shadow: none !important;
 }
 
+/* Interactivity WITHOUT a box: the clock TEXT brightens to cyan on hover (and
+ * full cyan while active/open) — the "glow" comes from the text itself, no pill.
+ * We must set color on the inner .clock (that's the text node), and beat the
+ * stock hover rule that would otherwise turn it white. */
+#panel.modern-bar .panel-button.clock-display:hover .clock,
+#panel.modern-bar .panel-button.clock-display:focus .clock {
+    color: #9dfaff !important;   /* bright cyan */
+}
+
+#panel.modern-bar .panel-button.clock-display:active .clock,
+#panel.modern-bar .panel-button.clock-display:checked .clock {
+    color: #2ff0ff !important;   /* full cyan while the calendar is open */
+}
+
 /* ── Panel button states -> cyan ──────────────────────────────────────────── */
 /* These target panel chrome only (the buttons sitting IN the top bar). They do
  * not reach inside any popup. Safe for the Quick Settings button too — this
