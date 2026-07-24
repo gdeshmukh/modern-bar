@@ -246,11 +246,11 @@ export default class ModernBarPreferences extends ExtensionPreferences {
         group.add(showRow);
 
         const refreshRow = new Adw.SpinRow({
-            title: 'Refresh interval (minutes)',
-            subtitle: 'Kept infrequent — the usage endpoint rate-limits aggressively.',
-            adjustment: new Gtk.Adjustment({lower: 2, upper: 60, step_increment: 1}),
+            title: 'Refresh interval (seconds)',
+            subtitle: 'The endpoint rate-limits; on failure the last value is kept and retried.',
+            adjustment: new Gtk.Adjustment({lower: 30, upper: 3600, step_increment: 30}),
         });
-        settings.bind('claude-refresh-minutes', refreshRow, 'value', Gio.SettingsBindFlags.DEFAULT);
+        settings.bind('claude-refresh-seconds', refreshRow, 'value', Gio.SettingsBindFlags.DEFAULT);
         group.add(refreshRow);
 
         const warnRow = new Adw.SpinRow({

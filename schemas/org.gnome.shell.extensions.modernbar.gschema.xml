@@ -102,11 +102,11 @@
       <description>Master toggle for the Claude 5-hour usage indicator.</description>
     </key>
 
-    <key name="claude-refresh-minutes" type="i">
-      <range min="2" max="60"/>
-      <default>5</default>
-      <summary>Claude usage refresh interval (minutes)</summary>
-      <description>How often to query the account usage endpoint. Kept infrequent — the endpoint rate-limits aggressively.</description>
+    <key name="claude-refresh-seconds" type="i">
+      <range min="30" max="3600"/>
+      <default>60</default>
+      <summary>Claude usage refresh interval (seconds)</summary>
+      <description>How often to query the account usage endpoint. ~1/min is fine with the claude-code User-Agent; on any failure the metric keeps its last value and retries, so a too-fast setting degrades gracefully rather than breaking.</description>
     </key>
 
     <key name="claude-warn-percent" type="i">
