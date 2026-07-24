@@ -18,6 +18,7 @@ import Clutter from 'gi://Clutter';
 import {CpuMetric} from './lib/cpuMetric.js';
 import {WorkdayMetric} from './lib/workdayMetric.js';
 import {WeatherMetric} from './lib/weatherMetric.js';
+import {ClaudeMetric} from './lib/claudeMetric.js';
 
 // ── Look toggles ────────────────────────────────────────────────────────────
 // Flip this and re-toggle the extension to compare the panel with/without the
@@ -86,6 +87,7 @@ export default class ModernBarExtension extends Extension {
             new CpuMetric(this._settings),
             new WorkdayMetric(this._settings),
             new WeatherMetric(this._settings),
+            new ClaudeMetric(this._settings),
         ];
         for (const m of this._metrics)
             this._metricsBox.add_child(m);

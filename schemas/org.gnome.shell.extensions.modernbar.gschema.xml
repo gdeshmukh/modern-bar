@@ -85,5 +85,26 @@
       <description>At or above this CPU %, the value flares Clu-orange as an alert.</description>
     </key>
 
+    <!-- ── Claude usage metric ────────────────────────────────────────── -->
+    <key name="show-claude" type="b">
+      <default>true</default>
+      <summary>Show the Claude usage metric</summary>
+      <description>Master toggle for the Claude 5-hour usage indicator.</description>
+    </key>
+
+    <key name="claude-refresh-minutes" type="i">
+      <range min="2" max="60"/>
+      <default>5</default>
+      <summary>Claude usage refresh interval (minutes)</summary>
+      <description>How often to query the account usage endpoint. Kept infrequent — the endpoint rate-limits aggressively.</description>
+    </key>
+
+    <key name="claude-warn-percent" type="i">
+      <range min="50" max="100"/>
+      <default>80</default>
+      <summary>Claude usage warning threshold (percent)</summary>
+      <description>At or above this 5-hour utilization %, the value flares Clu-orange.</description>
+    </key>
+
   </schema>
 </schemalist>

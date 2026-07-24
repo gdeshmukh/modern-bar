@@ -27,6 +27,7 @@ export default class ModernBarPreferences extends ExtensionPreferences {
         this._addWorkdayGroup(page, settings);
         this._addWeatherGroup(page, settings, window);
         this._addCpuGroup(page, settings);
+        this._addClaudeGroup(page, settings);
     }
 
     // ── Workday ─────────────────────────────────────────────────────────────
@@ -209,6 +210,37 @@ export default class ModernBarPreferences extends ExtensionPreferences {
             adjustment: new Gtk.Adjustment({lower: 50, upper: 100, step_increment: 5}),
         });
         settings.bind('cpu-warn-percent', warnRow, 'value', Gio.SettingsBindFlags.DEFAULT);
+        group.add(warnRow);
+    }
+
+    // ── Claude usage ────────────────────────────────────────────────────────
+    _addClaudeGroup(page, settings) {
+        const group = new Adw.PreferencesGroup({
+            title: 'Claude usage',
+            description: 'Your account 5-hour usage %, read via the token Claude ' +
+                'Code already stores (~/.claude). No login needed. Hides if Claude ' +
+                'Code is not installed or the endpoint is unreachable.',
+        });
+        page.add(group);
+
+        const showRow = new Adw.SwitchRow({title: 'Show Claude usage'});
+        settings.bind('show-claude', showRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+        group.add(showRow);
+
+        const refreshRow = new Adw.SpinRow({
+            title: 'Refresh interval (minutes)',
+            subtitle: 'Kept infrequent — the usage endpoint rate-limits aggressively.',
+            adjustment: new Gtk.Adjustment({lower: 2, upper: 60, step_increment: 1}),
+        });
+        settings.bind('claude-refresh-minutes', refreshRow, 'value', Gio.SettingsBindFlags.DEFAULT);
+        group.add(refreshRow);
+
+        const warnRow = new Adw.SpinRow({
+            title: 'Warning threshold (%)',
+            subtitle: 'At or above this 5-hour utilization, the value turns orange.',
+            adjustment: new Gtk.Adjustment({lower: 50, upper: 100, step_increment: 5}),
+        });
+        settings.bind('claude-warn-percent', warnRow, 'value', Gio.SettingsBindFlags.DEFAULT);
         group.add(warnRow);
     }
 }
