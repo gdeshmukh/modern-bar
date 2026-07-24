@@ -73,7 +73,7 @@
 #panel.modern-bar .modern-bar-metric-icon {
     icon-size: 15px;
     color: #9fe8f0;
-    padding-right: 2px;
+    padding-right: 4px;   /* the only glyph→number gap (labels have no leading space) */
 }
 
 /* Hover feedback: text/icon brighten to deep cyan, matching the clock. The
