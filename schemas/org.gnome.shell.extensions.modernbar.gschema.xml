@@ -103,10 +103,10 @@
     </key>
 
     <key name="claude-refresh-seconds" type="i">
-      <range min="30" max="3600"/>
-      <default>60</default>
+      <range min="10" max="3600"/>
+      <default>15</default>
       <summary>Claude usage refresh interval (seconds)</summary>
-      <description>How often to query the account usage endpoint. ~1/min is fine with the claude-code User-Agent; on any failure the metric keeps its last value and retries, so a too-fast setting degrades gracefully rather than breaking.</description>
+      <description>How often to query the account usage endpoint. A few per minute is fine with the claude-code User-Agent (needed to keep up with heavy models like Fable); on any failure the metric keeps its last value and retries on a short backoff, so a too-fast setting degrades gracefully rather than breaking.</description>
     </key>
 
     <key name="claude-warn-percent" type="i">
