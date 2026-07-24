@@ -87,7 +87,7 @@ export default class ModernBarExtension extends Extension {
         // pass the dir so those metrics can build Gio.FileIcons from it.
         const iconsPath = `${this.path}/icons`;
         this._metrics = [
-            new CpuMetric(this._settings),
+            new CpuMetric(this._settings, iconsPath),
             new WorkdayMetric(this._settings, iconsPath),
             new WeatherMetric(this._settings),
             new ClaudeMetric(this._settings, iconsPath),
