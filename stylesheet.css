@@ -105,51 +105,30 @@
     -minimum-hpadding: 6px;
 }
 
-/* The clock label specifically (12h + seconds + AM/PM set via gsettings). */
-#panel.modern-bar .clock-display,
+/* The clock. Font, rest color, and the flat-no-pill button styling all inherit
+ * from the .panel-button rule above (the clock IS a .panel-button) — we only add
+ * what's unique to the clock here:
+ *
+ *  - tnum: tabular figures so the width doesn't jitter as digits change.
+ *  - The stock theme paints the hover/active "pill" as a box-shadow on the INNER
+ *    `.clock` label (which also has border-radius:999px). The button-level
+ *    overrides don't reach that child, so kill its box-shadow/radius directly.
+ *  - Feedback is the text brightening to cyan (glow, not a box): bright on hover,
+ *    full cyan while the calendar is open. !important beats the stock
+ *    clock-specific rules (white-on-hover, inset-shadow pill). */
 #panel.modern-bar .clock-display .clock {
-    font-family: "JetBrains Mono", monospace;
-    font-size: 10.5pt;
-    color: #9fe8f0;   /* dim cyan at rest, matching the rest of the panel */
-    font-feature-settings: "tnum";   /* tabular figures so the clock stops jitter */
-}
-
-/* The "weird white pill" on clock hover. The stock theme draws TWO stacked
- * highlight layers, and the real pill is on the SECOND one — the inner `.clock`
- * label, not the button:
- *   #panel .panel-button.clock-display:hover        { box-shadow: inset 100px … }  (layer 1)
- *   #panel .panel-button.clock-display:hover .clock { box-shadow: inset 100px … }  (layer 2)
- * and `.clock-display .clock` carries `border-radius: 999px`, which is what
- * gives it the rounded pill shape. Earlier overrides only hit layer 1, so the
- * pill survived on the inner label. Kill BOTH the button and its .clock child,
- * in every state. !important beats the stock clock-specific specificity. */
-#panel.modern-bar .panel-button.clock-display,
-#panel.modern-bar .panel-button.clock-display:hover,
-#panel.modern-bar .panel-button.clock-display:focus,
-#panel.modern-bar .panel-button.clock-display:active,
-#panel.modern-bar .panel-button.clock-display:checked,
-#panel.modern-bar .panel-button.clock-display .clock,
-#panel.modern-bar .panel-button.clock-display:hover .clock,
-#panel.modern-bar .panel-button.clock-display:focus .clock,
-#panel.modern-bar .panel-button.clock-display:active .clock,
-#panel.modern-bar .panel-button.clock-display:checked .clock {
-    background-color: transparent !important;
-    border: none !important;
+    font-feature-settings: "tnum";
     border-radius: 0 !important;
     box-shadow: none !important;
 }
 
-/* Interactivity WITHOUT a box: the clock TEXT brightens to cyan on hover (and
- * full cyan while active/open) — the "glow" comes from the text itself, no pill.
- * We must set color on the inner .clock (that's the text node), and beat the
- * stock hover rule that would otherwise turn it white. */
-#panel.modern-bar .panel-button.clock-display:hover .clock,
-#panel.modern-bar .panel-button.clock-display:focus .clock {
-    color: #9dfaff !important;   /* bright cyan */
+#panel.modern-bar .clock-display:hover .clock,
+#panel.modern-bar .clock-display:focus .clock {
+    color: #9dfaff !important;   /* bright cyan on hover */
 }
 
-#panel.modern-bar .panel-button.clock-display:active .clock,
-#panel.modern-bar .panel-button.clock-display:checked .clock {
+#panel.modern-bar .clock-display:active .clock,
+#panel.modern-bar .clock-display:checked .clock {
     color: #2ff0ff !important;   /* full cyan while the calendar is open */
 }
 
