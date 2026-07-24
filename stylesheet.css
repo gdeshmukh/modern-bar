@@ -72,21 +72,21 @@
 }
 
 /* Hover feedback: text/icon brighten to deep cyan, matching the clock. The
- * metrics are reactive (see lib/*Metric.js) so :hover fires. Cosmetic focus cue;
- * clicking does nothing yet. The label is a child St.Label, so brighten it too. */
-#panel.modern-bar .modern-bar-metric:hover,
-#panel.modern-bar .modern-bar-metric:hover StLabel,
+ * metrics are reactive (see lib/*Metric.js) so :hover fires. The label text is a
+ * child that doesn't inherit the box's hover color, so it carries its own class
+ * (.modern-bar-metric-label) that we target directly. Cosmetic focus cue for
+ * now; clicking does nothing yet. */
+#panel.modern-bar .modern-bar-metric:hover .modern-bar-metric-label,
 #panel.modern-bar .modern-bar-metric:hover .modern-bar-weather-icon {
     color: #2ff0ff;   /* deep cyan */
 }
 
 /* Alert state — the ONLY place orange appears (CPU at/above its threshold).
- * Must WIN over the hover-cyan rule above (which is more specific), so the value
- * stays orange even while you're hovering it — you must never lose the alert by
- * pointing at it. Hence the matching hover selector + these base ones. */
+ * Must WIN over the hover rule above so an over-threshold CPU stays orange even
+ * while hovered (never lose the alert by pointing at it). Same-specificity
+ * hover selector, defined after, so orange wins. */
 #panel.modern-bar .modern-bar-alert,
-#panel.modern-bar .modern-bar-metric:hover .modern-bar-alert,
-#panel.modern-bar .modern-bar-metric:hover StLabel.modern-bar-alert {
+#panel.modern-bar .modern-bar-metric:hover .modern-bar-metric-label.modern-bar-alert {
     color: #ff8a4d;
 }
 
