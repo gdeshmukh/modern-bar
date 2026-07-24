@@ -24,7 +24,10 @@
 
 /* ── The panel itself ─────────────────────────────────────────────────────── */
 #panel.modern-bar {
-    background-color: rgba(4, 7, 13, 0.88);
+    /* Solid #04070d — identical to the kitty terminal background (which is fully
+     * opaque), so the bar reads as seamless with the terminal and uniform across
+     * apps. No transparency. */
+    background-color: #04070d;
     /* Flat. No gradient, no border, no box-shadow by default. */
     border: none;
     box-shadow: none;
@@ -59,6 +62,7 @@
 
 #panel.modern-bar .modern-bar-metric {
     color: #9fe8f0;
+    font-weight: 300;                /* lighter than the panel default; less heavy */
     font-feature-settings: "tnum";   /* stop width jitter as digits change */
 }
 
@@ -70,6 +74,20 @@
 /* Alert state — the ONLY place orange appears (CPU at/above its threshold). */
 #panel.modern-bar .modern-bar-alert {
     color: #ff8a4d;
+}
+
+/* Quick Settings on-panel icons (wifi / volume / battery, etc.) → dim cyan to
+ * match the rest of the bar. This is ONLY the panel glyphs
+ * (.system-status-icon in the status-indicators box); the QS dropdown internals
+ * are still left stock (that's the later "circle back" pass). */
+#panel.modern-bar .panel-status-indicators-box .system-status-icon {
+    color: #9fe8f0;
+}
+
+#panel.modern-bar .panel-button:hover .system-status-icon,
+#panel.modern-bar .panel-button:focus .system-status-icon,
+#panel.modern-bar .panel-button:checked .system-status-icon {
+    color: #9dfaff;
 }
 
 /* Every label/clock/indicator in the panel inherits the panel font + tone. */
@@ -94,6 +112,21 @@
     font-size: 10.5pt;
     color: #9fe8f0;   /* dim cyan at rest, matching the rest of the panel */
     font-feature-settings: "tnum";   /* tabular figures so the clock stops jitter */
+}
+
+/* The clock is a .panel-button whose INNER .clock-display box draws its own
+ * rounded hover/active highlight (the "weird white pill" outline). The generic
+ * .panel-button override doesn't reach this inner box, so kill it explicitly in
+ * every state — no bg, no border, no shadow; feedback is just the cyan text. */
+#panel.modern-bar .clock-display,
+#panel.modern-bar .panel-button:hover .clock-display,
+#panel.modern-bar .panel-button:focus .clock-display,
+#panel.modern-bar .panel-button:active .clock-display,
+#panel.modern-bar .panel-button:checked .clock-display {
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
 }
 
 /* ── Panel button states -> cyan ──────────────────────────────────────────── */
@@ -123,77 +156,10 @@
     outline: none;
 }
 
-/* ── Popup menus that hang off the panel ──────────────────────────────────── */
-/* Calendar/date menu, indicator menus, etc. Restyle so stock Adwaita doesn't
- * leak through.
- *
- * IMPORTANT (rule 5): we must NOT restyle the Quick Settings popup internals.
- * GNOME's QS popup uses .quick-settings; the :not(.quick-settings) guards and
- * the specific .calendar / .datemenu scoping below keep us clear of it. */
-
-.popup-menu.modern-bar-scope {
-    /* placeholder for future explicit opt-in scoping; unused in Phase 1 */
-}
-
-/* Calendar / date-menu popup (the clock's dropdown). */
-#calendarArea,
-.datemenu-popup .popup-menu-content,
-.calendar,
-.message-list {
-    background-color: #04070d;
-    color: #dff2f7;
-    border: 1px solid rgba(47, 240, 255, 0.20);
-}
-
-/* Generic panel popup menu boxes — but never Quick Settings. */
-.popup-menu:not(.quick-settings) .popup-menu-content {
-    background-color: #04070d;
-    color: #dff2f7;
-    border: 1px solid rgba(47, 240, 255, 0.20);
-}
-
-/* Popup menu items: cyan selection instead of Adwaita blue. */
-.popup-menu:not(.quick-settings) .popup-menu-item:hover,
-.popup-menu:not(.quick-settings) .popup-menu-item:focus,
-.popup-menu:not(.quick-settings) .popup-menu-item.selected {
-    background-color: rgba(47, 240, 255, 0.15);
-    color: #9dfaff;
-}
-
-.popup-menu:not(.quick-settings) .popup-menu-item:active {
-    background-color: rgba(47, 240, 255, 0.22);
-    color: #2ff0ff;
-}
-
-/* Calendar cells: cyan for today / selection, not blue. */
-.calendar .calendar-today,
-.calendar .calendar-day-base:hover,
-.calendar .calendar-day-base:focus {
-    color: #2ff0ff;
-    background-color: rgba(47, 240, 255, 0.12);
-    border-color: rgba(47, 240, 255, 0.35);
-}
-
-.calendar .calendar-day-base:selected {
-    background-color: rgba(47, 240, 255, 0.20);
-    color: #9dfaff;
-    border-color: #2ff0ff;
-}
-
-/* Message list (notifications inside the calendar popup): keep on-palette. */
-.message-list .message {
-    background-color: rgba(47, 240, 255, 0.04);
-    color: #dff2f7;
-}
-
-.message-list .message:hover,
-.message-list .message:focus {
-    background-color: rgba(47, 240, 255, 0.12);
-}
-
-/* World-clocks / weather sections in the date menu, kept on-palette. */
-.datemenu-popup .world-clocks-button,
-.datemenu-popup .weather-button {
-    background-color: rgba(47, 240, 255, 0.04);
-    color: #dff2f7;
-}
+/* ── Panel popups: left STOCK for now ─────────────────────────────────────── */
+/* The clock/calendar dropdown and other panel popups are intentionally NOT
+ * themed at the moment — the partial theming looked inconsistent, so it was
+ * removed. The dropdown reverts to clean stock Adwaita, matching the decision
+ * to leave Quick Settings stock too. Both are a deliberate "circle back later"
+ * item; the previous themed calendar/popup rules live in git history (this
+ * commit's parent) if resurrected alongside a proper Quick Settings pass. */
