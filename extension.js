@@ -2,7 +2,8 @@
 //
 // Lifecycle + wiring. The panel look lives in stylesheet.css (auto-loaded).
 // This file:
-//   1. tags #panel with CSS classes so the look can be toggled from here
+//   1. tags #panel with CSS classes so the look can be toggled from here,
+//      including the day/night (Tron/Clu) palette (night-mode in prefs)
 //   2. collapses the Activities button (Super key still opens the Overview)
 //   3. mounts the metrics cluster (CPU / Workday / Weather) on the LEFT, where
 //      Activities was; each reads config from GSettings and tears down its own
@@ -19,7 +20,6 @@ import {CpuMetric} from './lib/cpuMetric.js';
 import {WorkdayMetric} from './lib/workdayMetric.js';
 import {WeatherMetric} from './lib/weatherMetric.js';
 import {ClaudeMetric} from './lib/claudeMetric.js';
-import {PaletteWatcher} from './lib/paletteWatcher.js';
 
 // ── Look toggles ────────────────────────────────────────────────────────────
 // Flip this and re-toggle the extension to compare the panel with/without the
@@ -45,18 +45,17 @@ export default class ModernBarExtension extends Extension {
         if (UNDERGLOW)
             Main.panel.add_style_class_name(UNDERGLOW_CLASS);
 
-        // 1b. Day/night (Tron/Clu) palette. `night-mode` just toggles a CSS
-        //     class — see stylesheet.css's .modern-bar-night rules. It can be
-        //     flipped from prefs directly, OR it follows the user's kitty
-        //     tron-theme switch automatically via PaletteWatcher (one-way: the
-        //     terminal drives the bar, never the reverse — flipping the bar's
-        //     own toggle must not reach out and change kitty's theme).
+        // 1b. Day/night (Tron/Clu) palette. `night-mode` is a plain GSettings
+        //     boolean exposed in prefs (Palette group) — the only outward-facing
+        //     toggle. Flipping it just adds/removes a CSS class; see
+        //     stylesheet.css's .modern-bar-night rules for the actual colors.
+        //     No file-watching here — that's a personal convenience some users
+        //     may wire up themselves (e.g. a shell script that also runs
+        //     `gsettings set org.gnome.shell.extensions.modernbar night-mode ...`),
+        //     not something the extension does on anyone's behalf.
         this._syncNightClass();
         this._nightModeId = this._settings.connect(
             'changed::night-mode', () => this._syncNightClass());
-
-        this._paletteWatcher = new PaletteWatcher(this._settings);
-        this._paletteWatcher.start();
 
         // NOTE: Tray / app-indicators are left VISIBLE. They sit on the right
         // near Quick Settings (the traditional spot) and balance the left-side
@@ -136,10 +135,6 @@ export default class ModernBarExtension extends Extension {
             this._metricsBox = null;
         }
 
-        if (this._paletteWatcher) {
-            this._paletteWatcher.stop();
-            this._paletteWatcher = null;
-        }
         if (this._settings && this._nightModeId) {
             this._settings.disconnect(this._nightModeId);
         }

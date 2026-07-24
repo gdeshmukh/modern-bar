@@ -35,10 +35,8 @@ export default class ModernBarPreferences extends ExtensionPreferences {
     _addPaletteGroup(page, settings) {
         const group = new Adw.PreferencesGroup({
             title: 'Palette',
-            description: 'Tron (day, cyan) or Clu (night, amber). Also follows ' +
-                'the kitty tron-theme switch automatically — flipping it in the ' +
-                'terminal updates the bar too. Flipping it HERE only changes the ' +
-                'bar, not the terminal.',
+            description: 'Choose the bar\'s color scheme: Tron (day, cyan) or ' +
+                'Clu (night, amber). More palettes may be added later.',
         });
         page.add(group);
 
