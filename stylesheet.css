@@ -71,8 +71,22 @@
     color: #9fe8f0;
 }
 
-/* Alert state — the ONLY place orange appears (CPU at/above its threshold). */
-#panel.modern-bar .modern-bar-alert {
+/* Hover feedback: text/icon brighten to deep cyan, matching the clock. The
+ * metrics are reactive (see lib/*Metric.js) so :hover fires. Cosmetic focus cue;
+ * clicking does nothing yet. The label is a child St.Label, so brighten it too. */
+#panel.modern-bar .modern-bar-metric:hover,
+#panel.modern-bar .modern-bar-metric:hover StLabel,
+#panel.modern-bar .modern-bar-metric:hover .modern-bar-weather-icon {
+    color: #2ff0ff;   /* deep cyan */
+}
+
+/* Alert state — the ONLY place orange appears (CPU at/above its threshold).
+ * Must WIN over the hover-cyan rule above (which is more specific), so the value
+ * stays orange even while you're hovering it — you must never lose the alert by
+ * pointing at it. Hence the matching hover selector + these base ones. */
+#panel.modern-bar .modern-bar-alert,
+#panel.modern-bar .modern-bar-metric:hover .modern-bar-alert,
+#panel.modern-bar .modern-bar-metric:hover StLabel.modern-bar-alert {
     color: #ff8a4d;
 }
 
@@ -87,7 +101,7 @@
 #panel.modern-bar .panel-button:hover .system-status-icon,
 #panel.modern-bar .panel-button:focus .system-status-icon,
 #panel.modern-bar .panel-button:checked .system-status-icon {
-    color: #9dfaff;
+    color: #2ff0ff;   /* deep cyan on hover */
 }
 
 /* Every label/clock/indicator in the panel inherits the panel font + tone. */
@@ -122,14 +136,13 @@
     box-shadow: none !important;
 }
 
+/* Deep/electric cyan on hover AND while active — a clear jump from the resting
+ * dim cyan (#9dfaff was too close to #9fe8f0 to read as a change). */
 #panel.modern-bar .clock-display:hover .clock,
-#panel.modern-bar .clock-display:focus .clock {
-    color: #9dfaff !important;   /* bright cyan on hover */
-}
-
+#panel.modern-bar .clock-display:focus .clock,
 #panel.modern-bar .clock-display:active .clock,
 #panel.modern-bar .clock-display:checked .clock {
-    color: #2ff0ff !important;   /* full cyan while the calendar is open */
+    color: #2ff0ff !important;   /* deep cyan */
 }
 
 /* ── Panel button states -> cyan ──────────────────────────────────────────── */
@@ -140,17 +153,12 @@
  * text/icon brightening to cyan. Keep the background transparent so nothing
  * draws behind the glyph. */
 #panel.modern-bar .panel-button:hover,
-#panel.modern-bar .panel-button:focus {
-    color: #9dfaff;
-    background-color: transparent !important;
-    box-shadow: none !important;   /* kill the stock inset-100px white pill */
-}
-
+#panel.modern-bar .panel-button:focus,
 #panel.modern-bar .panel-button:active,
 #panel.modern-bar .panel-button:checked {
-    color: #2ff0ff;
+    color: #2ff0ff;   /* deep cyan — clear jump from resting dim cyan */
     background-color: transparent !important;
-    box-shadow: none !important;
+    box-shadow: none !important;   /* kill the stock inset-100px white pill */
 }
 
 /* Focus outline, if any, in cyan rather than Adwaita blue. */
