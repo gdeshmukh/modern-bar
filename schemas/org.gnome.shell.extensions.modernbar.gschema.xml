@@ -3,6 +3,17 @@
   <schema id="org.gnome.shell.extensions.modernbar"
           path="/org/gnome/shell/extensions/modernbar/">
 
+    <!-- ── Palette (Tron/Clu day-night toggle) ───────────────────────────── -->
+    <key name="night-mode" type="b">
+      <default>false</default>
+      <summary>Clu/night palette</summary>
+      <description>false = Tron day (cyan). true = Clu night (amber). Mirrors the
+        user's kitty tron-theme day/night switch — the extension also watches
+        ~/.config/kitty/themes/theme-active.conf so switching in the terminal
+        flips the bar automatically, and tron-theme itself sets this key
+        directly for an instant flip.</description>
+    </key>
+
     <!-- ── Workday metric ─────────────────────────────────────────────── -->
     <key name="work-start" type="s">
       <default>'09:00'</default>

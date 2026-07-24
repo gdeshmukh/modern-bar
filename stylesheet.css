@@ -178,3 +178,79 @@
  * to leave Quick Settings stock too. Both are a deliberate "circle back later"
  * item; the previous themed calendar/popup rules live in git history (this
  * commit's parent) if resurrected alongside a proper Quick Settings pass. */
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * NIGHT / CLU PALETTE  (day-night toggle, mirrors kitty's tron-theme)
+ *
+ * Same role-for-role mapping as the day palette (kitty theme-night.conf),
+ * just swapping the hue family — nothing else about the bar's behavior
+ * changes. Toggled by extension.js adding/removing .modern-bar-night on
+ * #panel, driven by the `night-mode` GSettings key. That key flips either
+ * from the prefs toggle, or automatically when extension.js notices
+ * ~/.config/kitty/themes/theme-active.conf point at theme-night.conf (a file
+ * monitor, matching how tron-theme itself works — no polling). tron-theme
+ * also sets the key directly on day/night/toggle for an instant flip with no
+ * dependence on inotify latency.
+ *
+ *   role                  day (cyan)          night (amber)
+ *   ------------------------------------------------------------
+ *   background             #04070d             #0b0703
+ *   dim text (rest)        #9fe8f0             #e8a860
+ *   bright accent (hover)  #9dfaff             #ffc46b
+ *   deep accent (active)   #2ff0ff             #ffa233
+ *   popup near-white       #dff2f7             #fff2e0
+ *   alert (still reserved) #ff8a4d / #ff6a2f   #3d94e0 (night's own "cold
+ *                                               intrusion" color — the one
+ *                                               cool thing in Clu's warm
+ *                                               world, per theme-night.conf)
+ * ───────────────────────────────────────────────────────────────────────── */
+
+#panel.modern-bar.modern-bar-night {
+    background-color: #0b0703;
+    color: #e8a860;
+}
+
+#panel.modern-bar.modern-bar-night.modern-bar-underglow {
+    border-bottom: 2px solid #ffa233;
+}
+
+#panel.modern-bar.modern-bar-night .modern-bar-metric,
+#panel.modern-bar.modern-bar-night .modern-bar-weather-icon,
+#panel.modern-bar.modern-bar-night .modern-bar-metric-icon,
+#panel.modern-bar.modern-bar-night .panel-status-indicators-box .system-status-icon,
+#panel.modern-bar.modern-bar-night .panel-button {
+    color: #e8a860;
+}
+
+#panel.modern-bar.modern-bar-night .modern-bar-metric:hover .modern-bar-metric-label,
+#panel.modern-bar.modern-bar-night .modern-bar-metric:hover .modern-bar-weather-icon,
+#panel.modern-bar.modern-bar-night .modern-bar-metric:hover .modern-bar-metric-icon,
+#panel.modern-bar.modern-bar-night .panel-button:hover .system-status-icon,
+#panel.modern-bar.modern-bar-night .panel-button:focus .system-status-icon,
+#panel.modern-bar.modern-bar-night .panel-button:checked .system-status-icon {
+    color: #ffa233;
+}
+
+/* Alert stays reserved for alerts — on the night side it flips to the cold
+ * blue theme-night.conf uses for its own "something's wrong" signal, so it
+ * still reads as the one intrusion against the warm palette. */
+#panel.modern-bar.modern-bar-night .modern-bar-alert,
+#panel.modern-bar.modern-bar-night .modern-bar-metric:hover .modern-bar-metric-label.modern-bar-alert {
+    color: #3d94e0;
+}
+
+#panel.modern-bar.modern-bar-night .clock-display:hover .clock,
+#panel.modern-bar.modern-bar-night .clock-display:focus .clock,
+#panel.modern-bar.modern-bar-night .clock-display:active .clock,
+#panel.modern-bar.modern-bar-night .clock-display:checked .clock {
+    color: #ffa233 !important;
+}
+
+#panel.modern-bar.modern-bar-night .panel-button:hover,
+#panel.modern-bar.modern-bar-night .panel-button:focus,
+#panel.modern-bar.modern-bar-night .panel-button:active,
+#panel.modern-bar.modern-bar-night .panel-button:checked {
+    color: #ffa233;
+    background-color: transparent !important;
+    box-shadow: none !important;
+}

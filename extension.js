@@ -19,6 +19,7 @@ import {CpuMetric} from './lib/cpuMetric.js';
 import {WorkdayMetric} from './lib/workdayMetric.js';
 import {WeatherMetric} from './lib/weatherMetric.js';
 import {ClaudeMetric} from './lib/claudeMetric.js';
+import {PaletteWatcher} from './lib/paletteWatcher.js';
 
 // ── Look toggles ────────────────────────────────────────────────────────────
 // Flip this and re-toggle the extension to compare the panel with/without the
@@ -32,14 +33,30 @@ const UNDERGLOW = false;
 
 const PANEL_CLASS = 'modern-bar';
 const UNDERGLOW_CLASS = 'modern-bar-underglow';
+const NIGHT_CLASS = 'modern-bar-night';
 
 export default class ModernBarExtension extends Extension {
     enable() {
+        this._settings = this.getSettings();
+
         // 1. Tag the panel so stylesheet.css can scope to us and so the
         //    under-glow is toggleable without editing CSS.
         Main.panel.add_style_class_name(PANEL_CLASS);
         if (UNDERGLOW)
             Main.panel.add_style_class_name(UNDERGLOW_CLASS);
+
+        // 1b. Day/night (Tron/Clu) palette. `night-mode` just toggles a CSS
+        //     class — see stylesheet.css's .modern-bar-night rules. It can be
+        //     flipped from prefs directly, OR it follows the user's kitty
+        //     tron-theme switch automatically via PaletteWatcher (one-way: the
+        //     terminal drives the bar, never the reverse — flipping the bar's
+        //     own toggle must not reach out and change kitty's theme).
+        this._syncNightClass();
+        this._nightModeId = this._settings.connect(
+            'changed::night-mode', () => this._syncNightClass());
+
+        this._paletteWatcher = new PaletteWatcher(this._settings);
+        this._paletteWatcher.start();
 
         // NOTE: Tray / app-indicators are left VISIBLE. They sit on the right
         // near Quick Settings (the traditional spot) and balance the left-side
@@ -75,8 +92,6 @@ export default class ModernBarExtension extends Extension {
         // 3. Metrics cluster on the LEFT (where Activities was). One container
         //    holds the three indicators in order: CPU, Workday, Weather. Each
         //    reads config from GSettings and manages its own timers.
-        this._settings = this.getSettings();
-
         this._metricsBox = new St.BoxLayout({
             style_class: 'modern-bar-metrics',
             y_align: Clutter.ActorAlign.CENTER,
@@ -99,6 +114,15 @@ export default class ModernBarExtension extends Extension {
         Main.panel._leftBox.insert_child_at_index(this._metricsBox, 0);
     }
 
+    // Add/remove NIGHT_CLASS on #panel to match the night-mode GSettings key.
+    // Purely a CSS class swap — see stylesheet.css's .modern-bar-night rules.
+    _syncNightClass() {
+        if (this._settings.get_boolean('night-mode'))
+            Main.panel.add_style_class_name(NIGHT_CLASS);
+        else
+            Main.panel.remove_style_class_name(NIGHT_CLASS);
+    }
+
     disable() {
         // Tear down the metrics cluster first (each metric stops its own timers
         // and disconnects its own settings signals in destroy()).
@@ -111,6 +135,16 @@ export default class ModernBarExtension extends Extension {
             this._metricsBox.destroy();
             this._metricsBox = null;
         }
+
+        if (this._paletteWatcher) {
+            this._paletteWatcher.stop();
+            this._paletteWatcher = null;
+        }
+        if (this._settings && this._nightModeId) {
+            this._settings.disconnect(this._nightModeId);
+        }
+        this._nightModeId = 0;
+        Main.panel.remove_style_class_name(NIGHT_CLASS);
         this._settings = null;
 
         // Restore the Activities button fully: drop our 'show' guard, clear the

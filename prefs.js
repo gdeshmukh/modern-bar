@@ -24,10 +24,30 @@ export default class ModernBarPreferences extends ExtensionPreferences {
         });
         window.add(page);
 
+        this._addPaletteGroup(page, settings);
         this._addWorkdayGroup(page, settings);
         this._addWeatherGroup(page, settings, window);
         this._addCpuGroup(page, settings);
         this._addClaudeGroup(page, settings);
+    }
+
+    // ── Palette ─────────────────────────────────────────────────────────────
+    _addPaletteGroup(page, settings) {
+        const group = new Adw.PreferencesGroup({
+            title: 'Palette',
+            description: 'Tron (day, cyan) or Clu (night, amber). Also follows ' +
+                'the kitty tron-theme switch automatically — flipping it in the ' +
+                'terminal updates the bar too. Flipping it HERE only changes the ' +
+                'bar, not the terminal.',
+        });
+        page.add(group);
+
+        const nightRow = new Adw.SwitchRow({
+            title: 'Clu / night palette',
+            subtitle: 'Off = Tron day (cyan). On = Clu night (amber).',
+        });
+        settings.bind('night-mode', nightRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+        group.add(nightRow);
     }
 
     // ── Workday ─────────────────────────────────────────────────────────────
