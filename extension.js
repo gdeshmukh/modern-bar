@@ -128,10 +128,12 @@ export default class ModernBarExtension extends Extension {
         // Custom symbolic icons (briefcase, Claude mark) are bundled in icons/;
         // pass the dir so those metrics can build Gio.FileIcons from it.
         const iconsPath = `${this.path}/icons`;
+        // Workday has no dropdown: a percentage of the way through the day has
+        // no detail worth a second line.
         this._metrics = [
-            new CpuMetric(this._settings, iconsPath),
+            new CpuMetric(this._settings, iconsPath, this._menuManager),
             new WorkdayMetric(this._settings, iconsPath),
-            new WeatherMetric(this._settings),
+            new WeatherMetric(this._settings, this._menuManager),
             new ClaudeMetric(this._settings, iconsPath, this._menuManager),
         ];
         for (const m of this._metrics)

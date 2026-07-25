@@ -640,6 +640,19 @@
     color: #ff8a4d;
 }
 
+/* Leading glyph on an iconRow (forecast days). Sized to the text, not the
+ * panel's 15px, so a 7-row forecast stays compact. */
+.modern-bar-popups .modern-bar-popup .modern-bar-popup-icon {
+    icon-size: 14px;
+    color: #9fe8f0;
+    padding-right: 8px;
+}
+
+/* iconRow lines sit tighter than meter rows — no bar underneath to space them. */
+.modern-bar-popups .modern-bar-popup .modern-bar-popup-rowtop {
+    padding-bottom: 3px;
+}
+
 /* Reset times and the "updated Ns ago" line. */
 .modern-bar-popups .modern-bar-popup .modern-bar-popup-caption {
     color: rgba(159, 232, 240, 0.50);
@@ -1100,6 +1113,10 @@
 
 .modern-bar-popups.modern-bar-night .modern-bar-popup .modern-bar-popup-value.modern-bar-alert {
     color: #3d94e0;
+}
+
+.modern-bar-popups.modern-bar-night .modern-bar-popup .modern-bar-popup-icon {
+    color: #e8a860;
 }
 
 .modern-bar-popups.modern-bar-night .modern-bar-popup .modern-bar-popup-caption {
