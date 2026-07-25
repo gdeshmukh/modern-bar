@@ -15,12 +15,12 @@ import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import St from 'gi://St';
 import Clutter from 'gi://Clutter';
-import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
 import {CpuMetric} from './lib/cpuMetric.js';
 import {WorkdayMetric} from './lib/workdayMetric.js';
 import {WeatherMetric} from './lib/weatherMetric.js';
 import {ClaudeMetric} from './lib/claudeMetric.js';
+import {MetricPopupGroup} from './lib/metricPopup.js';
 
 // ── Look toggles ────────────────────────────────────────────────────────────
 // Flip this and re-toggle the extension to compare the panel with/without the
@@ -120,10 +120,12 @@ export default class ModernBarExtension extends Extension {
             x_expand: false,
         });
 
-        // One manager shared by every metric dropdown: it gives click-outside-to-
-        // close and guarantees only one metric popup is open at a time. Metrics
-        // that don't take it simply have no dropdown.
-        this._menuManager = new PopupMenu.PopupMenuManager(Main.panel);
+        // Shared registry for the metric dropdowns: guarantees only one is open
+        // at a time. Deliberately NOT a PopupMenuManager — that takes a modal
+        // grab (Main.pushModal), which steals keyboard focus and forces a click
+        // elsewhere to dismiss. These popups close on pointer proximity instead;
+        // see lib/metricPopup.js. Metrics not given it simply have no dropdown.
+        this._popupGroup = new MetricPopupGroup();
 
         // Custom symbolic icons (briefcase, Claude mark) are bundled in icons/;
         // pass the dir so those metrics can build Gio.FileIcons from it.
@@ -131,10 +133,10 @@ export default class ModernBarExtension extends Extension {
         // Workday has no dropdown: a percentage of the way through the day has
         // no detail worth a second line.
         this._metrics = [
-            new CpuMetric(this._settings, iconsPath, this._menuManager),
+            new CpuMetric(this._settings, iconsPath, this._popupGroup),
             new WorkdayMetric(this._settings, iconsPath),
-            new WeatherMetric(this._settings, this._menuManager),
-            new ClaudeMetric(this._settings, iconsPath, this._menuManager),
+            new WeatherMetric(this._settings, this._popupGroup),
+            new ClaudeMetric(this._settings, iconsPath, this._popupGroup),
         ];
         for (const m of this._metrics)
             this._metricsBox.add_child(m);
@@ -182,7 +184,7 @@ export default class ModernBarExtension extends Extension {
         }
         // After the metrics: each one removes its own menu from the manager in
         // destroy(), so by here the manager is empty and safe to drop.
-        this._menuManager = null;
+        this._popupGroup = null;
 
         if (this._settings && this._settingsIds) {
             for (const id of this._settingsIds)
