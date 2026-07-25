@@ -13,6 +13,16 @@
         for scripting a personal sync (e.g. to a terminal theme switcher).</description>
     </key>
 
+    <key name="theme-popups" type="b">
+      <default>true</default>
+      <summary>Theme the panel dropdowns</summary>
+      <description>Extend the palette to the Quick Settings and clock/calendar
+        dropdowns. Off leaves both stock Adwaita (the panel itself is still themed).
+        Kept as its own switch because these popups live outside #panel and lean on
+        stock GNOME selectors — if a shell upgrade ever breaks them, this is the
+        one-flip escape hatch that does not require disabling the extension.</description>
+    </key>
+
     <!-- ── Workday metric ─────────────────────────────────────────────── -->
     <key name="work-start" type="s">
       <default>'09:00'</default>

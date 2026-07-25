@@ -46,6 +46,17 @@ export default class ModernBarPreferences extends ExtensionPreferences {
         });
         settings.bind('night-mode', nightRow, 'active', Gio.SettingsBindFlags.DEFAULT);
         group.add(nightRow);
+
+        // Popups are styled from stock GNOME selectors that can shift between
+        // shell releases, so they get their own switch — turn this off and the
+        // dropdowns fall back to stock Adwaita without touching the panel.
+        const popupRow = new Adw.SwitchRow({
+            title: 'Theme the dropdowns',
+            subtitle: 'Apply the palette to Quick Settings and the clock/calendar ' +
+                'menu. Off leaves them stock.',
+        });
+        settings.bind('theme-popups', popupRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+        group.add(popupRow);
     }
 
     // ── Workday ─────────────────────────────────────────────────────────────

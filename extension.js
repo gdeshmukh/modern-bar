@@ -15,6 +15,7 @@ import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import St from 'gi://St';
 import Clutter from 'gi://Clutter';
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
 import {CpuMetric} from './lib/cpuMetric.js';
 import {WorkdayMetric} from './lib/workdayMetric.js';
@@ -35,6 +36,23 @@ const PANEL_CLASS = 'modern-bar';
 const UNDERGLOW_CLASS = 'modern-bar-underglow';
 const NIGHT_CLASS = 'modern-bar-night';
 
+// Scope class for the panel DROPDOWNS (Quick Settings + clock/calendar).
+//
+// It goes on Main.uiGroup, NOT on #panel, and that is not a style preference —
+// it's forced by the actor tree. PanelMenu.Button.setMenu() reparents a panel
+// menu with `Main.uiGroup.add_child(this.menu.actor)`, so the popup is a SIBLING
+// of panelBox, never a descendant of #panel:
+//
+//   uiGroup
+//   ├─ panelBox → #panel          ← .modern-bar / .modern-bar-underglow live here
+//   └─ menu.actor (boxpointer)    ← the QS + calendar popups live HERE
+//
+// So no `#panel ...` selector can reach popup content, and the night palette
+// could never have applied to them from #panel alone. uiGroup is the nearest
+// common ancestor, is a plain St.Widget (it takes style classes), and lives for
+// the whole session, so tagging it is stable across enable/disable.
+const POPUP_CLASS = 'modern-bar-popups';
+
 export default class ModernBarExtension extends Extension {
     enable() {
         this._settings = this.getSettings();
@@ -53,9 +71,14 @@ export default class ModernBarExtension extends Extension {
         //     may wire up themselves (e.g. a shell script that also runs
         //     `gsettings set org.gnome.shell.extensions.modernbar night-mode ...`),
         //     not something the extension does on anyone's behalf.
+        //     The night class is applied to BOTH #panel and uiGroup — see
+        //     POPUP_CLASS above for why one node can't cover both.
         this._syncNightClass();
-        this._nightModeId = this._settings.connect(
-            'changed::night-mode', () => this._syncNightClass());
+        this._syncPopupClass();
+        this._settingsIds = [
+            this._settings.connect('changed::night-mode', () => this._syncNightClass()),
+            this._settings.connect('changed::theme-popups', () => this._syncPopupClass()),
+        ];
 
         // NOTE: Tray / app-indicators are left VISIBLE. They sit on the right
         // near Quick Settings (the traditional spot) and balance the left-side
@@ -97,6 +120,11 @@ export default class ModernBarExtension extends Extension {
             x_expand: false,
         });
 
+        // One manager shared by every metric dropdown: it gives click-outside-to-
+        // close and guarantees only one metric popup is open at a time. Metrics
+        // that don't take it simply have no dropdown.
+        this._menuManager = new PopupMenu.PopupMenuManager(Main.panel);
+
         // Custom symbolic icons (briefcase, Claude mark) are bundled in icons/;
         // pass the dir so those metrics can build Gio.FileIcons from it.
         const iconsPath = `${this.path}/icons`;
@@ -104,7 +132,7 @@ export default class ModernBarExtension extends Extension {
             new CpuMetric(this._settings, iconsPath),
             new WorkdayMetric(this._settings, iconsPath),
             new WeatherMetric(this._settings),
-            new ClaudeMetric(this._settings, iconsPath),
+            new ClaudeMetric(this._settings, iconsPath, this._menuManager),
         ];
         for (const m of this._metrics)
             this._metricsBox.add_child(m);
@@ -113,13 +141,29 @@ export default class ModernBarExtension extends Extension {
         Main.panel._leftBox.insert_child_at_index(this._metricsBox, 0);
     }
 
-    // Add/remove NIGHT_CLASS on #panel to match the night-mode GSettings key.
-    // Purely a CSS class swap — see stylesheet.css's .modern-bar-night rules.
+    // Add/remove NIGHT_CLASS to match the night-mode GSettings key. Purely a CSS
+    // class swap — see stylesheet.css's .modern-bar-night rules.
+    //
+    // Applied to BOTH nodes: #panel styles the bar, uiGroup styles the dropdowns.
+    // They are siblings, so neither one alone covers both (see POPUP_CLASS).
     _syncNightClass() {
-        if (this._settings.get_boolean('night-mode'))
-            Main.panel.add_style_class_name(NIGHT_CLASS);
+        const night = this._settings.get_boolean('night-mode');
+        for (const actor of [Main.panel, Main.uiGroup]) {
+            if (night)
+                actor.add_style_class_name(NIGHT_CLASS);
+            else
+                actor.remove_style_class_name(NIGHT_CLASS);
+        }
+    }
+
+    // Gate the dropdown theming on `theme-popups`. Removing the class reverts
+    // Quick Settings and the calendar to stock Adwaita instantly, with the panel
+    // itself left themed — the escape hatch if a shell upgrade breaks the popups.
+    _syncPopupClass() {
+        if (this._settings.get_boolean('theme-popups'))
+            Main.uiGroup.add_style_class_name(POPUP_CLASS);
         else
-            Main.panel.remove_style_class_name(NIGHT_CLASS);
+            Main.uiGroup.remove_style_class_name(POPUP_CLASS);
     }
 
     disable() {
@@ -134,12 +178,20 @@ export default class ModernBarExtension extends Extension {
             this._metricsBox.destroy();
             this._metricsBox = null;
         }
+        // After the metrics: each one removes its own menu from the manager in
+        // destroy(), so by here the manager is empty and safe to drop.
+        this._menuManager = null;
 
-        if (this._settings && this._nightModeId) {
-            this._settings.disconnect(this._nightModeId);
+        if (this._settings && this._settingsIds) {
+            for (const id of this._settingsIds)
+                this._settings.disconnect(id);
         }
-        this._nightModeId = 0;
+        this._settingsIds = null;
         Main.panel.remove_style_class_name(NIGHT_CLASS);
+        // uiGroup outlives the extension, so both of our classes must come off
+        // it here or they'd linger (and keep restyling popups) after disable().
+        Main.uiGroup.remove_style_class_name(NIGHT_CLASS);
+        Main.uiGroup.remove_style_class_name(POPUP_CLASS);
         this._settings = null;
 
         // Restore the Activities button fully: drop our 'show' guard, clear the

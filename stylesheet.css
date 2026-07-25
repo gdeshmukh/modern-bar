@@ -15,11 +15,12 @@
  *   - JetBrains Mono ~10.5pt across the whole panel.
  *   - Hover/active/checked -> cyan. Nothing orange unless it's an alert.
  *
- * NOTE ON QUICK SETTINGS: left STOCK (default Adwaita). We tried theming it and
- * it looked bad — GNOME 50 builds QS toggles from a compiled multi-layer accent
- * fill that a flat extension override can't cleanly replace (purple bleed on the
- * edges). Reverted; may revisit later. The :not(.quick-settings) guards below
- * keep our other popup rules from leaking into it.
+ * DROPDOWNS (Quick Settings + calendar) ARE THEMED — see the block near the
+ * bottom of this file. An earlier attempt was reverted with the note that
+ * GNOME 50's "compiled multi-layer accent fill" couldn't be replaced; that
+ * turned out to be a misdiagnosis (extension stylesheets outrank the theme,
+ * `!important` included — the real problem was missed states). The block
+ * documents the mechanism in full.
  * ───────────────────────────────────────────────────────────────────────── */
 
 /* ── The panel itself ─────────────────────────────────────────────────────── */
@@ -171,13 +172,500 @@
     outline: none;
 }
 
-/* ── Panel popups: left STOCK for now ─────────────────────────────────────── */
-/* The clock/calendar dropdown and other panel popups are intentionally NOT
- * themed at the moment — the partial theming looked inconsistent, so it was
- * removed. The dropdown reverts to clean stock Adwaita, matching the decision
- * to leave Quick Settings stock too. Both are a deliberate "circle back later"
- * item; the previous themed calendar/popup rules live in git history (this
- * commit's parent) if resurrected alongside a proper Quick Settings pass. */
+/* ─────────────────────────────────────────────────────────────────────────
+ * PANEL DROPDOWNS — Quick Settings + clock/calendar
+ *
+ * Scoped under .modern-bar-popups, which extension.js puts on Main.uiGroup
+ * (NOT #panel — the popups are siblings of panelBox, so no `#panel ...`
+ * selector can reach them). Gated by the `theme-popups` GSettings key, so this
+ * whole block can be switched off without disabling the extension.
+ *
+ * WHY THE 2026-07-23 ATTEMPT FAILED (and what changed):
+ * The old note said GNOME 50's "compiled multi-layer accent fill can't be
+ * cleanly replaced by a flat override." That diagnosis was wrong. Extension
+ * stylesheets are a SEPARATE CASCADE ORIGIN that outranks the shell theme
+ * unconditionally — origin is compared before specificity, so a plain 1-class
+ * extension rule beats a 3-class `!important` theme rule. (Verified against
+ * st-theme.c's origin comparator and live in a headless shell.)
+ *
+ * The real cause was INCOMPLETE COVERAGE. The theme derives ~209 declarations
+ * from `-st-accent-color`, which is a VALUE KEYWORD St resolves from the
+ * system accent (`org.gnome.desktop.interface accent-color`, purple here) —
+ * it is NOT a property, so you cannot redefine it, and there is no setter in
+ * St or JS. Every accent-bearing state must be restated. The old CSS styled
+ * `:checked` but not `:hover:checked`, `:focus:checked`, the separator, or the
+ * nine `!important` focus rings — and those rings are `inset 0 0 0 2px` on the
+ * EDGE of the tile, which is literally the "purple edge-bleed" that was seen.
+ *
+ * RULES FOR EDITING THIS BLOCK:
+ *  1. RECOLOR ONLY — never restate border-radius, padding, size or icon-size.
+ *     Stock geometry is correct; leaving it alone is what keeps us upgrade-safe.
+ *  2. Focus rings MUST carry `!important` (stock declares them `!important`;
+ *     matching origin+important is the only way to win).
+ *  3. NEVER write a bare `.button`, `.icon-button`, `.flat`, `.message`,
+ *     `.popup-menu-content` or `StScrollBar` rule — those bases are shared with
+ *     the login screen, Looking Glass, screenshot UI and modal dialogs. Always
+ *     anchor on `.quick-settings`, `.quick-toggle-menu`, `.datemenu-popover`,
+ *     `.calendar`, or `.message-list`.
+ *  4. Sub-menus are NOT inside `.quick-settings` — the overlay is a sibling of
+ *     the boxpointer, so `.quick-settings .quick-toggle-menu` matches nothing.
+ *     Use `.modern-bar-popups .quick-toggle-menu`.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+/* ── Popup surfaces ───────────────────────────────────────────────────────── */
+/* Stock paints these #36363a with a #424247 border. */
+.modern-bar-popups .quick-settings,
+.modern-bar-popups .datemenu-popover {
+    background-color: #04070d;
+    border: 1px solid rgba(47, 240, 255, 0.20);
+    color: #9fe8f0;
+}
+
+/* Raised "card" surfaces: QS sub-menus and the calendar's info cards (stock
+ * #47474c / #54545a). Slightly lifted off the popup bg so they still read as
+ * cards without a border-heavy look. */
+.modern-bar-popups .quick-toggle-menu,
+.modern-bar-popups .datemenu-popover .events-button,
+.modern-bar-popups .datemenu-popover .world-clocks-button,
+.modern-bar-popups .datemenu-popover .weather-button,
+.modern-bar-popups .message-list .message {
+    background-color: rgba(47, 240, 255, 0.05);
+    border: 1px solid rgba(47, 240, 255, 0.12);
+    color: #9fe8f0;
+}
+
+.modern-bar-popups .quick-toggle-menu:hover,
+.modern-bar-popups .datemenu-popover .events-button:hover,
+.modern-bar-popups .datemenu-popover .world-clocks-button:hover,
+.modern-bar-popups .datemenu-popover .weather-button:hover,
+.modern-bar-popups .message-list .message:hover {
+    background-color: rgba(47, 240, 255, 0.10);
+}
+
+.modern-bar-popups .quick-toggle-menu:active,
+.modern-bar-popups .datemenu-popover .events-button:active,
+.modern-bar-popups .datemenu-popover .world-clocks-button:active,
+.modern-bar-popups .datemenu-popover .weather-button:active,
+.modern-bar-popups .message-list .message:active {
+    background-color: rgba(47, 240, 255, 0.16);
+}
+
+/* Stacked notifications sit progressively deeper (stock #45454a / #3d3d42). */
+.modern-bar-popups .message-list .message:second-in-stack {
+    background-color: rgba(47, 240, 255, 0.035);
+}
+.modern-bar-popups .message-list .message:lower-in-stack {
+    background-color: rgba(47, 240, 255, 0.02);
+}
+
+/* ── Interactive tiles (rest / hover / active / insensitive) ───────────────── */
+/* Everything that stock paints as a grey plate: QS toggles and icon buttons,
+ * the menu-toggle half, calendar pager arrows, and the notification buttons.
+ * Note .calendar-day / -heading / month-label are painted #36363a too (NOT
+ * transparent), so they must be neutralised here or they'd be grey tiles. */
+.modern-bar-popups .quick-settings .quick-toggle,
+.modern-bar-popups .quick-settings .icon-button,
+.modern-bar-popups .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button,
+.modern-bar-popups .calendar .calendar-month-header .pager-button,
+.modern-bar-popups .message-list-controls .message-list-clear-button,
+.modern-bar-popups .message-list .message-close-button,
+.modern-bar-popups .message-list .message-expand-button,
+.modern-bar-popups .message-list .message-collapse-button {
+    background-color: rgba(47, 240, 255, 0.07);
+    color: #9fe8f0;
+}
+
+.modern-bar-popups .quick-settings .quick-toggle:hover,
+.modern-bar-popups .quick-settings .icon-button:hover,
+.modern-bar-popups .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:hover,
+.modern-bar-popups .calendar .calendar-month-header .pager-button:hover,
+.modern-bar-popups .message-list-controls .message-list-clear-button:hover,
+.modern-bar-popups .message-list .message-close-button:hover,
+.modern-bar-popups .message-list .message-expand-button:hover,
+.modern-bar-popups .message-list .message-collapse-button:hover {
+    background-color: rgba(47, 240, 255, 0.14);
+    color: #2ff0ff;
+}
+
+.modern-bar-popups .quick-settings .quick-toggle:active,
+.modern-bar-popups .quick-settings .icon-button:active,
+.modern-bar-popups .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:active,
+.modern-bar-popups .calendar .calendar-month-header .pager-button:active,
+.modern-bar-popups .message-list-controls .message-list-clear-button:active,
+.modern-bar-popups .message-list .message-close-button:active,
+.modern-bar-popups .message-list .message-expand-button:active,
+.modern-bar-popups .message-list .message-collapse-button:active {
+    background-color: rgba(47, 240, 255, 0.20);
+    color: #2ff0ff;
+}
+
+/* Disabled. Reached more often than you'd think: the Clear button whenever
+ * there's nothing to clear, and Events with no calendar app installed. */
+.modern-bar-popups .quick-settings .quick-toggle:insensitive,
+.modern-bar-popups .quick-settings .icon-button:insensitive,
+.modern-bar-popups .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:insensitive,
+.modern-bar-popups .message-list-controls .message-list-clear-button:insensitive,
+.modern-bar-popups .datemenu-popover .events-button:insensitive {
+    background-color: rgba(47, 240, 255, 0.03);
+    color: rgba(159, 232, 240, 0.38);
+}
+
+/* ── The "on" state ───────────────────────────────────────────────────────── */
+/* Stock derives EVERY one of these from -st-accent-color, so all of them have
+ * to be restated or the un-covered ones keep painting the system accent. This
+ * is the list the previous attempt was missing most of.
+ *
+ * ACCENT INTENSITY SCALES INVERSELY WITH AREA. A solid fill was tried on
+ * everything first and the QS tiles were far too loud — three 12em × 3.27em
+ * pills of saturated cyan side by side dominate the whole dropdown, while the
+ * SAME colour on the calendar's 3em "today" circle reads as a tasteful accent.
+ * So: large tiles get a quiet wash + a lit 2px edge; only small indicators stay
+ * solid. Do not "simplify" these two groups back into one.
+ *
+ * The ring is an inset box-shadow (no blur) so it can't shift layout — cheap,
+ * and stock already draws its focus rings the same way. The :focus rules further
+ * down carry !important, so a focused tile still shows the focus ring instead. */
+.modern-bar-popups .quick-settings .quick-toggle:checked,
+.modern-bar-popups .quick-settings .quick-toggle:focus:checked,
+.modern-bar-popups .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked,
+.modern-bar-popups .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:focus {
+    background-color: rgba(157, 250, 255, 0.13);
+    box-shadow: inset 0 0 0 2px rgba(157, 250, 255, 0.45);
+    /* Text stays the DEEP cyan on purpose: #9dfaff is only a few points off the
+     * resting #9fe8f0, so an "on" tile whose text also went pale would stop
+     * reading as a state change (the same reason panel hover isn't #9dfaff). */
+    color: #2ff0ff;
+}
+
+/* Pointer on an "on" tile — lift the wash and the edge together. */
+.modern-bar-popups .quick-settings .quick-toggle:hover:checked,
+.modern-bar-popups .quick-settings .quick-toggle:focus:hover:checked,
+.modern-bar-popups .quick-settings .quick-toggle:active:checked,
+.modern-bar-popups .quick-settings .quick-toggle:active:hover:checked,
+.modern-bar-popups .quick-settings .quick-toggle:active:focus:checked,
+.modern-bar-popups .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:hover,
+.modern-bar-popups .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:focus:hover,
+.modern-bar-popups .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:active,
+.modern-bar-popups .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:active:hover,
+.modern-bar-popups .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:active:focus {
+    background-color: rgba(157, 250, 255, 0.20);
+    box-shadow: inset 0 0 0 2px rgba(157, 250, 255, 0.62);
+    color: #2ff0ff;
+}
+
+/* SMALL indicators only — solid accent earns its place here because the area is
+ * tiny (a switch, a 1.6em header icon, the brightness pips). */
+.modern-bar-popups .quick-settings .keyboard-brightness-level .button:checked,
+.modern-bar-popups .quick-toggle-menu .header .icon.active,
+.modern-bar-popups .quick-toggle-menu .toggle-switch:checked,
+.modern-bar-popups .quick-toggle-menu .toggle-switch:checked:hover {
+    background-color: #9dfaff;   /* softened from #2ff0ff — solid fill */
+    color: #04070d;
+}
+
+/* Child labels/icons don't repaint from the parent on their own in every
+ * state, so pin them explicitly. */
+.modern-bar-popups .quick-settings .quick-toggle:checked .quick-toggle-title,
+.modern-bar-popups .quick-settings .quick-toggle:checked .quick-toggle-icon {
+    color: #2ff0ff;
+}
+.modern-bar-popups .quick-settings .quick-toggle:checked .quick-toggle-subtitle {
+    color: rgba(159, 232, 240, 0.75);
+}
+
+/* An "on" toggle that's also disabled — keep it reading as on, just muted. */
+.modern-bar-popups .quick-settings .quick-toggle:insensitive:checked {
+    background-color: rgba(157, 250, 255, 0.08);
+    box-shadow: inset 0 0 0 2px rgba(157, 250, 255, 0.24);
+    color: rgba(159, 232, 240, 0.45);
+}
+
+/* The hairline between a menu-toggle's two halves. Now that a checked tile is
+ * dark rather than solid cyan, the separator reads as cyan in both states. The
+ * checked rule must out-specify stock's own (0,3,0), hence the extra anchor. */
+.modern-bar-popups .quick-settings .quick-toggle-has-menu .quick-toggle-separator {
+    background-color: rgba(157, 250, 255, 0.22);
+}
+.modern-bar-popups .quick-settings .quick-toggle-has-menu:checked .quick-toggle-separator {
+    background-color: rgba(157, 250, 255, 0.42);
+}
+
+/* ── Sliders (volume / brightness) ────────────────────────────────────────── */
+/* The fill is a St-specific property, NOT background-color; the handle is the
+ * plain `color`. -barlevel-height / -slider-handle-radius are geometry: leave. */
+.modern-bar-popups .quick-settings .slider,
+.modern-bar-popups .quick-toggle-menu .slider {
+    color: #9dfaff;                                   /* handle — softened fill */
+    -barlevel-background-color: rgba(47, 240, 255, 0.15);
+    -barlevel-active-background-color: #9dfaff;       /* softened from #2ff0ff */
+}
+
+/* Handle brightens to near-white on hover. It can't brighten to #9dfaff any more
+ * now that that IS the resting colour. */
+.modern-bar-popups .quick-settings .slider:hover,
+.modern-bar-popups .quick-toggle-menu .slider:hover {
+    color: #dff2f7;
+}
+
+/* ── QS sub-menu internals ────────────────────────────────────────────────── */
+.modern-bar-popups .quick-toggle-menu .header .icon {
+    background-color: rgba(47, 240, 255, 0.12);
+    color: #9fe8f0;
+}
+
+.modern-bar-popups .quick-toggle-menu .popup-menu-item {
+    color: #9fe8f0;
+}
+
+.modern-bar-popups .quick-toggle-menu .popup-menu-item:hover,
+.modern-bar-popups .quick-toggle-menu .popup-menu-item:selected,
+.modern-bar-popups .quick-toggle-menu .popup-menu-item:checked {
+    background-color: rgba(47, 240, 255, 0.14);
+    color: #2ff0ff;
+}
+
+.modern-bar-popups .quick-toggle-menu .popup-menu-item:active {
+    background-color: rgba(47, 240, 255, 0.20);
+    color: #2ff0ff;
+}
+
+.modern-bar-popups .quick-toggle-menu .popup-menu-item:insensitive,
+.modern-bar-popups .quick-toggle-menu .device-subtitle {
+    color: rgba(159, 232, 240, 0.38);
+}
+
+/* ── Calendar: month grid ─────────────────────────────────────────────────── */
+/* Stock paints days/headings/month-label with the SURFACE colour (#36363a),
+ * so they must go transparent or they'd tile the grid in grey. */
+.modern-bar-popups .calendar .calendar-day,
+.modern-bar-popups .calendar .calendar-day-heading {
+    background-color: transparent;
+    color: #9fe8f0;
+}
+
+/* Stock forces this one #ffffff !important. */
+.modern-bar-popups .calendar .calendar-month-header .calendar-month-label {
+    background-color: transparent;
+    color: #dff2f7 !important;
+}
+
+.modern-bar-popups .calendar .calendar-day:hover,
+.modern-bar-popups .calendar .calendar-day-heading:hover {
+    background-color: rgba(47, 240, 255, 0.14);
+    color: #2ff0ff;
+}
+
+/* "Selected" is a neutral grey in stock (it is NOT accent-driven) — give it a
+ * quiet cyan fill so it stays clearly distinct from today's solid fill. */
+.modern-bar-popups .calendar .calendar-day:selected,
+.modern-bar-popups .calendar .calendar-day:active {
+    background-color: rgba(47, 240, 255, 0.22);
+    color: #2ff0ff;
+}
+
+/* Today: the single biggest accent surface in the dropdown. Stock forces the
+ * text colour !important, so we must too. */
+.modern-bar-popups .calendar .calendar-day.calendar-today,
+.modern-bar-popups .calendar .calendar-day.calendar-today:hover,
+.modern-bar-popups .calendar .calendar-day.calendar-today:focus,
+.modern-bar-popups .calendar .calendar-day.calendar-today:active,
+.modern-bar-popups .calendar .calendar-day.calendar-today:selected {
+    background-color: #2ff0ff;
+    color: #04070d !important;
+}
+
+.modern-bar-popups .calendar .calendar-day.calendar-today:insensitive {
+    background-color: rgba(47, 240, 255, 0.45);
+    color: rgba(4, 7, 13, 0.7) !important;
+}
+
+.modern-bar-popups .calendar .calendar-day.calendar-weekend {
+    color: rgba(159, 232, 240, 0.62);
+}
+
+.modern-bar-popups .calendar .calendar-day.calendar-other-month,
+.modern-bar-popups .calendar .calendar-day.calendar-other-month.calendar-weekend {
+    color: rgba(159, 232, 240, 0.32);
+}
+
+.modern-bar-popups .calendar .calendar-week-number {
+    background-color: rgba(47, 240, 255, 0.10);
+    color: rgba(159, 232, 240, 0.55);
+}
+
+/* ── Calendar: date header, cards, secondary text ─────────────────────────── */
+/* The today-button's RESTING state is :insensitive (it only becomes reactive
+ * once you select a different day), so that rule is the one that matters. */
+.modern-bar-popups .datemenu-today-button,
+.modern-bar-popups .datemenu-today-button:insensitive {
+    background-color: transparent;
+    color: #dff2f7;
+}
+
+.modern-bar-popups .datemenu-today-button .day-label {
+    color: #9fe8f0;
+}
+
+/* All the #b2b2b4 secondary labels across events / clocks / weather / headers. */
+.modern-bar-popups .datemenu-popover .events-title,
+.modern-bar-popups .datemenu-popover .event-time,
+.modern-bar-popups .datemenu-popover .event-placeholder,
+.modern-bar-popups .datemenu-popover .world-clocks-header,
+.modern-bar-popups .datemenu-popover .world-clocks-timezone,
+.modern-bar-popups .datemenu-popover .weather-header,
+.modern-bar-popups .message-list .message .message-header {
+    color: rgba(159, 232, 240, 0.58);
+}
+
+/* The "Add World Clocks…" / "Select a location…" call-to-action states are
+ * white in stock — they should read brighter than the labels around them. */
+.modern-bar-popups .datemenu-popover .world-clocks-header.no-world-clocks,
+.modern-bar-popups .datemenu-popover .weather-header.no-location {
+    color: #dff2f7;
+}
+
+.modern-bar-popups .datemenu-popover .event-summary,
+.modern-bar-popups .datemenu-popover .world-clocks-city,
+.modern-bar-popups .datemenu-popover .world-clocks-time,
+.modern-bar-popups .datemenu-popover .weather-forecast-temp,
+.modern-bar-popups .message-list .message .message-title {
+    color: #dff2f7;
+}
+
+/* ── Notifications column ─────────────────────────────────────────────────── */
+/* The vertical hairline between notifications and the calendar. */
+.modern-bar-popups .message-list:ltr {
+    border-right-color: rgba(47, 240, 255, 0.12);
+}
+.modern-bar-popups .message-list:rtl {
+    border-left-color: rgba(47, 240, 255, 0.12);
+}
+
+.modern-bar-popups .message-list .message-list-placeholder {
+    color: rgba(159, 232, 240, 0.40);
+}
+
+.modern-bar-popups .message-list .url-highlighter {
+    link-color: #2ff0ff;
+}
+
+/* Overlay scrollbar — scoped so it can't touch scrollbars elsewhere. */
+.modern-bar-popups .datemenu-popover StScrollBar > .vhandle,
+.modern-bar-popups .datemenu-popover StScrollBar > .hhandle {
+    background-color: rgba(47, 240, 255, 0.25);
+}
+.modern-bar-popups .datemenu-popover StScrollBar > .vhandle:hover,
+.modern-bar-popups .datemenu-popover StScrollBar > .hhandle:hover {
+    background-color: rgba(47, 240, 255, 0.40);
+}
+
+/* ── Our own metric dropdowns (.modern-bar-popup) ─────────────────────────── */
+/* Detail popups for the panel metrics (Claude usage, later weather/CPU). These
+ * are OUR widgets, not GNOME's, so unlike everything above we own the geometry
+ * here — the recolor-only rule doesn't apply. Built by lib/metricPopup.js.
+ *
+ * Deliberately not PopupMenuItems: these are read-only readouts, so there are no
+ * hover/activate states to style. */
+.modern-bar-popups .modern-bar-popup .popup-menu-content {
+    background-color: #04070d;
+    border: 1px solid rgba(47, 240, 255, 0.20);
+    padding: 14px 16px;
+}
+
+.modern-bar-popups .modern-bar-popup .modern-bar-popup-content {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10pt;
+    color: #9fe8f0;
+    min-width: 180px;
+}
+
+.modern-bar-popups .modern-bar-popup .modern-bar-popup-header {
+    color: #2ff0ff;
+    font-size: 8.5pt;
+    font-weight: bold;
+    padding-bottom: 10px;
+}
+
+/* One readout: name + value on a line, meter underneath. */
+.modern-bar-popups .modern-bar-popup .modern-bar-popup-row {
+    padding-bottom: 9px;
+}
+
+.modern-bar-popups .modern-bar-popup .modern-bar-popup-name {
+    color: #9fe8f0;
+}
+
+.modern-bar-popups .modern-bar-popup .modern-bar-popup-value {
+    color: #dff2f7;
+    font-weight: bold;
+    font-feature-settings: "tnum";   /* stop width jitter as digits change */
+    padding-left: 12px;
+}
+
+/* Meter. The fill's WIDTH is set in JS (St has no percentage widths), so only
+ * colour and height live here — keep -popup-meter's height in sync with the fill. */
+.modern-bar-popups .modern-bar-popup .modern-bar-popup-meter {
+    background-color: rgba(47, 240, 255, 0.14);
+    height: 3px;
+    margin-top: 5px;
+}
+
+.modern-bar-popups .modern-bar-popup .modern-bar-popup-meter-fill {
+    background-color: #9dfaff;   /* softened from #2ff0ff — solid fill */
+    height: 3px;
+}
+
+/* Over the warn threshold — the one place orange is allowed. */
+.modern-bar-popups .modern-bar-popup .modern-bar-popup-meter-alert {
+    background-color: #ff8a4d;
+}
+
+.modern-bar-popups .modern-bar-popup .modern-bar-popup-value.modern-bar-alert {
+    color: #ff8a4d;
+}
+
+/* Reset times and the "updated Ns ago" line. */
+.modern-bar-popups .modern-bar-popup .modern-bar-popup-caption {
+    color: rgba(159, 232, 240, 0.50);
+    font-size: 8.5pt;
+    padding-bottom: 8px;
+}
+
+.modern-bar-popups .modern-bar-popup .modern-bar-popup-separator {
+    background-color: rgba(47, 240, 255, 0.15);
+    height: 1px;
+    margin: 2px 0 9px 0;
+}
+
+/* ── Focus rings ──────────────────────────────────────────────────────────── */
+/* Stock declares all nine of these `inset 0 0 0 2px <accent>` with !important.
+ * These sit on the EDGE of a tile — leaving any one un-restated is exactly the
+ * "purple edge-bleed" from the reverted attempt. Keep the inset geometry. */
+.modern-bar-popups .quick-settings .quick-toggle:focus,
+.modern-bar-popups .quick-settings .quick-toggle:focus:checked,
+.modern-bar-popups .quick-settings .icon-button:focus,
+.modern-bar-popups .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:focus,
+.modern-bar-popups .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:focus,
+.modern-bar-popups .quick-settings .quick-slider .slider-bin:focus,
+.modern-bar-popups .quick-toggle-menu:focus,
+.modern-bar-popups .quick-toggle-menu .popup-menu-item:focus,
+.modern-bar-popups .calendar:focus,
+.modern-bar-popups .calendar .calendar-day:focus,
+.modern-bar-popups .calendar .calendar-day.calendar-today:focus,
+.modern-bar-popups .calendar .calendar-day-heading:focus,
+.modern-bar-popups .calendar .calendar-month-header .pager-button:focus,
+.modern-bar-popups .calendar .calendar-month-header .calendar-month-label:focus,
+.modern-bar-popups .datemenu-today-button:focus,
+.modern-bar-popups .datemenu-popover .events-button:focus,
+.modern-bar-popups .datemenu-popover .world-clocks-button:focus,
+.modern-bar-popups .datemenu-popover .weather-button:focus,
+.modern-bar-popups .message-list .message:focus,
+.modern-bar-popups .message-list .message-close-button:focus,
+.modern-bar-popups .message-list .message-expand-button:focus,
+.modern-bar-popups .message-list .message-collapse-button:focus,
+.modern-bar-popups .message-list-controls .message-list-clear-button:focus {
+    box-shadow: inset 0 0 0 2px rgba(47, 240, 255, 0.80) !important;
+}
 
 /* ─────────────────────────────────────────────────────────────────────────
  * NIGHT / CLU PALETTE  (day-night toggle, mirrors kitty's tron-theme)
@@ -253,4 +741,371 @@
     color: #ffa233;
     background-color: transparent !important;
     box-shadow: none !important;
+}
+
+/* ── Night palette for the dropdowns ──────────────────────────────────────── */
+/* A role-for-role mirror of the day block above, amber instead of cyan. Both
+ * classes land on Main.uiGroup, so these carry one more class than the day
+ * rules and win on specificity. Selectors are kept IDENTICAL to the day block —
+ * if you add a rule up there, add it here too, or that surface will stay cyan
+ * at night. (St has no CSS variables, so the duplication is unavoidable.) */
+
+.modern-bar-popups.modern-bar-night .quick-settings,
+.modern-bar-popups.modern-bar-night .datemenu-popover {
+    background-color: #0b0703;
+    border: 1px solid rgba(255, 162, 51, 0.20);
+    color: #e8a860;
+}
+
+.modern-bar-popups.modern-bar-night .quick-toggle-menu,
+.modern-bar-popups.modern-bar-night .datemenu-popover .events-button,
+.modern-bar-popups.modern-bar-night .datemenu-popover .world-clocks-button,
+.modern-bar-popups.modern-bar-night .datemenu-popover .weather-button,
+.modern-bar-popups.modern-bar-night .message-list .message {
+    background-color: rgba(255, 162, 51, 0.05);
+    border: 1px solid rgba(255, 162, 51, 0.12);
+    color: #e8a860;
+}
+
+.modern-bar-popups.modern-bar-night .quick-toggle-menu:hover,
+.modern-bar-popups.modern-bar-night .datemenu-popover .events-button:hover,
+.modern-bar-popups.modern-bar-night .datemenu-popover .world-clocks-button:hover,
+.modern-bar-popups.modern-bar-night .datemenu-popover .weather-button:hover,
+.modern-bar-popups.modern-bar-night .message-list .message:hover {
+    background-color: rgba(255, 162, 51, 0.10);
+}
+
+.modern-bar-popups.modern-bar-night .quick-toggle-menu:active,
+.modern-bar-popups.modern-bar-night .datemenu-popover .events-button:active,
+.modern-bar-popups.modern-bar-night .datemenu-popover .world-clocks-button:active,
+.modern-bar-popups.modern-bar-night .datemenu-popover .weather-button:active,
+.modern-bar-popups.modern-bar-night .message-list .message:active {
+    background-color: rgba(255, 162, 51, 0.16);
+}
+
+.modern-bar-popups.modern-bar-night .message-list .message:second-in-stack {
+    background-color: rgba(255, 162, 51, 0.035);
+}
+.modern-bar-popups.modern-bar-night .message-list .message:lower-in-stack {
+    background-color: rgba(255, 162, 51, 0.02);
+}
+
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle,
+.modern-bar-popups.modern-bar-night .quick-settings .icon-button,
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button,
+.modern-bar-popups.modern-bar-night .calendar .calendar-month-header .pager-button,
+.modern-bar-popups.modern-bar-night .message-list-controls .message-list-clear-button,
+.modern-bar-popups.modern-bar-night .message-list .message-close-button,
+.modern-bar-popups.modern-bar-night .message-list .message-expand-button,
+.modern-bar-popups.modern-bar-night .message-list .message-collapse-button {
+    background-color: rgba(255, 162, 51, 0.07);
+    color: #e8a860;
+}
+
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle:hover,
+.modern-bar-popups.modern-bar-night .quick-settings .icon-button:hover,
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:hover,
+.modern-bar-popups.modern-bar-night .calendar .calendar-month-header .pager-button:hover,
+.modern-bar-popups.modern-bar-night .message-list-controls .message-list-clear-button:hover,
+.modern-bar-popups.modern-bar-night .message-list .message-close-button:hover,
+.modern-bar-popups.modern-bar-night .message-list .message-expand-button:hover,
+.modern-bar-popups.modern-bar-night .message-list .message-collapse-button:hover {
+    background-color: rgba(255, 162, 51, 0.14);
+    color: #ffa233;
+}
+
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle:active,
+.modern-bar-popups.modern-bar-night .quick-settings .icon-button:active,
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:active,
+.modern-bar-popups.modern-bar-night .calendar .calendar-month-header .pager-button:active,
+.modern-bar-popups.modern-bar-night .message-list-controls .message-list-clear-button:active,
+.modern-bar-popups.modern-bar-night .message-list .message-close-button:active,
+.modern-bar-popups.modern-bar-night .message-list .message-expand-button:active,
+.modern-bar-popups.modern-bar-night .message-list .message-collapse-button:active {
+    background-color: rgba(255, 162, 51, 0.20);
+    color: #ffa233;
+}
+
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle:insensitive,
+.modern-bar-popups.modern-bar-night .quick-settings .icon-button:insensitive,
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:insensitive,
+.modern-bar-popups.modern-bar-night .message-list-controls .message-list-clear-button:insensitive,
+.modern-bar-popups.modern-bar-night .datemenu-popover .events-button:insensitive {
+    background-color: rgba(255, 162, 51, 0.03);
+    color: rgba(232, 168, 96, 0.38);
+}
+
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle:checked,
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle:focus:checked,
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked,
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:focus {
+    background-color: rgba(255, 196, 107, 0.13);
+    box-shadow: inset 0 0 0 2px rgba(255, 196, 107, 0.45);
+    /* Text stays the DEEP amber: #ffc46b is close to the resting #e8a860, so a
+     * pale-on-pale "on" tile would stop reading as a state change. */
+    color: #ffa233;
+}
+
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle:hover:checked,
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle:focus:hover:checked,
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle:active:checked,
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle:active:hover:checked,
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle:active:focus:checked,
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:hover,
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:focus:hover,
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:active,
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:active:hover,
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:active:focus {
+    background-color: rgba(255, 196, 107, 0.20);
+    box-shadow: inset 0 0 0 2px rgba(255, 196, 107, 0.62);
+    color: #ffa233;
+}
+
+.modern-bar-popups.modern-bar-night .quick-settings .keyboard-brightness-level .button:checked,
+.modern-bar-popups.modern-bar-night .quick-toggle-menu .header .icon.active,
+.modern-bar-popups.modern-bar-night .quick-toggle-menu .toggle-switch:checked,
+.modern-bar-popups.modern-bar-night .quick-toggle-menu .toggle-switch:checked:hover {
+    background-color: #ffc46b;   /* softened from #ffa233 — solid fill */
+    color: #0b0703;
+}
+
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle:checked .quick-toggle-title,
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle:checked .quick-toggle-icon {
+    color: #ffa233;
+}
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle:checked .quick-toggle-subtitle {
+    color: rgba(232, 168, 96, 0.75);
+}
+
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle:insensitive:checked {
+    background-color: rgba(255, 196, 107, 0.08);
+    box-shadow: inset 0 0 0 2px rgba(255, 196, 107, 0.24);
+    color: rgba(232, 168, 96, 0.45);
+}
+
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle-has-menu .quick-toggle-separator {
+    background-color: rgba(255, 196, 107, 0.22);
+}
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle-has-menu:checked .quick-toggle-separator {
+    background-color: rgba(255, 196, 107, 0.42);
+}
+
+.modern-bar-popups.modern-bar-night .quick-settings .slider,
+.modern-bar-popups.modern-bar-night .quick-toggle-menu .slider {
+    color: #ffc46b;                                    /* handle — softened */
+    -barlevel-background-color: rgba(255, 162, 51, 0.15);
+    -barlevel-active-background-color: #ffc46b;        /* softened from #ffa233 */
+}
+
+.modern-bar-popups.modern-bar-night .quick-settings .slider:hover,
+.modern-bar-popups.modern-bar-night .quick-toggle-menu .slider:hover {
+    color: #fff2e0;
+}
+
+.modern-bar-popups.modern-bar-night .quick-toggle-menu .header .icon {
+    background-color: rgba(255, 162, 51, 0.12);
+    color: #e8a860;
+}
+
+.modern-bar-popups.modern-bar-night .quick-toggle-menu .popup-menu-item {
+    color: #e8a860;
+}
+
+.modern-bar-popups.modern-bar-night .quick-toggle-menu .popup-menu-item:hover,
+.modern-bar-popups.modern-bar-night .quick-toggle-menu .popup-menu-item:selected,
+.modern-bar-popups.modern-bar-night .quick-toggle-menu .popup-menu-item:checked {
+    background-color: rgba(255, 162, 51, 0.14);
+    color: #ffa233;
+}
+
+.modern-bar-popups.modern-bar-night .quick-toggle-menu .popup-menu-item:active {
+    background-color: rgba(255, 162, 51, 0.20);
+    color: #ffa233;
+}
+
+.modern-bar-popups.modern-bar-night .quick-toggle-menu .popup-menu-item:insensitive,
+.modern-bar-popups.modern-bar-night .quick-toggle-menu .device-subtitle {
+    color: rgba(232, 168, 96, 0.38);
+}
+
+.modern-bar-popups.modern-bar-night .calendar .calendar-day,
+.modern-bar-popups.modern-bar-night .calendar .calendar-day-heading {
+    background-color: transparent;
+    color: #e8a860;
+}
+
+.modern-bar-popups.modern-bar-night .calendar .calendar-month-header .calendar-month-label {
+    background-color: transparent;
+    color: #fff2e0 !important;
+}
+
+.modern-bar-popups.modern-bar-night .calendar .calendar-day:hover,
+.modern-bar-popups.modern-bar-night .calendar .calendar-day-heading:hover {
+    background-color: rgba(255, 162, 51, 0.14);
+    color: #ffa233;
+}
+
+.modern-bar-popups.modern-bar-night .calendar .calendar-day:selected,
+.modern-bar-popups.modern-bar-night .calendar .calendar-day:active {
+    background-color: rgba(255, 162, 51, 0.22);
+    color: #ffa233;
+}
+
+.modern-bar-popups.modern-bar-night .calendar .calendar-day.calendar-today,
+.modern-bar-popups.modern-bar-night .calendar .calendar-day.calendar-today:hover,
+.modern-bar-popups.modern-bar-night .calendar .calendar-day.calendar-today:focus,
+.modern-bar-popups.modern-bar-night .calendar .calendar-day.calendar-today:active,
+.modern-bar-popups.modern-bar-night .calendar .calendar-day.calendar-today:selected {
+    background-color: #ffa233;
+    color: #0b0703 !important;
+}
+
+.modern-bar-popups.modern-bar-night .calendar .calendar-day.calendar-today:insensitive {
+    background-color: rgba(255, 162, 51, 0.45);
+    color: rgba(11, 7, 3, 0.7) !important;
+}
+
+.modern-bar-popups.modern-bar-night .calendar .calendar-day.calendar-weekend {
+    color: rgba(232, 168, 96, 0.62);
+}
+
+.modern-bar-popups.modern-bar-night .calendar .calendar-day.calendar-other-month,
+.modern-bar-popups.modern-bar-night .calendar .calendar-day.calendar-other-month.calendar-weekend {
+    color: rgba(232, 168, 96, 0.32);
+}
+
+.modern-bar-popups.modern-bar-night .calendar .calendar-week-number {
+    background-color: rgba(255, 162, 51, 0.10);
+    color: rgba(232, 168, 96, 0.55);
+}
+
+.modern-bar-popups.modern-bar-night .datemenu-today-button,
+.modern-bar-popups.modern-bar-night .datemenu-today-button:insensitive {
+    background-color: transparent;
+    color: #fff2e0;
+}
+
+.modern-bar-popups.modern-bar-night .datemenu-today-button .day-label {
+    color: #e8a860;
+}
+
+.modern-bar-popups.modern-bar-night .datemenu-popover .events-title,
+.modern-bar-popups.modern-bar-night .datemenu-popover .event-time,
+.modern-bar-popups.modern-bar-night .datemenu-popover .event-placeholder,
+.modern-bar-popups.modern-bar-night .datemenu-popover .world-clocks-header,
+.modern-bar-popups.modern-bar-night .datemenu-popover .world-clocks-timezone,
+.modern-bar-popups.modern-bar-night .datemenu-popover .weather-header,
+.modern-bar-popups.modern-bar-night .message-list .message .message-header {
+    color: rgba(232, 168, 96, 0.58);
+}
+
+.modern-bar-popups.modern-bar-night .datemenu-popover .world-clocks-header.no-world-clocks,
+.modern-bar-popups.modern-bar-night .datemenu-popover .weather-header.no-location {
+    color: #fff2e0;
+}
+
+.modern-bar-popups.modern-bar-night .datemenu-popover .event-summary,
+.modern-bar-popups.modern-bar-night .datemenu-popover .world-clocks-city,
+.modern-bar-popups.modern-bar-night .datemenu-popover .world-clocks-time,
+.modern-bar-popups.modern-bar-night .datemenu-popover .weather-forecast-temp,
+.modern-bar-popups.modern-bar-night .message-list .message .message-title {
+    color: #fff2e0;
+}
+
+.modern-bar-popups.modern-bar-night .message-list:ltr {
+    border-right-color: rgba(255, 162, 51, 0.12);
+}
+.modern-bar-popups.modern-bar-night .message-list:rtl {
+    border-left-color: rgba(255, 162, 51, 0.12);
+}
+
+.modern-bar-popups.modern-bar-night .message-list .message-list-placeholder {
+    color: rgba(232, 168, 96, 0.40);
+}
+
+.modern-bar-popups.modern-bar-night .message-list .url-highlighter {
+    link-color: #ffa233;
+}
+
+.modern-bar-popups.modern-bar-night .datemenu-popover StScrollBar > .vhandle,
+.modern-bar-popups.modern-bar-night .datemenu-popover StScrollBar > .hhandle {
+    background-color: rgba(255, 162, 51, 0.25);
+}
+.modern-bar-popups.modern-bar-night .datemenu-popover StScrollBar > .vhandle:hover,
+.modern-bar-popups.modern-bar-night .datemenu-popover StScrollBar > .hhandle:hover {
+    background-color: rgba(255, 162, 51, 0.40);
+}
+
+/* Our metric dropdowns, night side. */
+.modern-bar-popups.modern-bar-night .modern-bar-popup .popup-menu-content {
+    background-color: #0b0703;
+    border: 1px solid rgba(255, 162, 51, 0.20);
+}
+
+.modern-bar-popups.modern-bar-night .modern-bar-popup .modern-bar-popup-content {
+    color: #e8a860;
+}
+
+.modern-bar-popups.modern-bar-night .modern-bar-popup .modern-bar-popup-header {
+    color: #ffa233;
+}
+
+.modern-bar-popups.modern-bar-night .modern-bar-popup .modern-bar-popup-name {
+    color: #e8a860;
+}
+
+.modern-bar-popups.modern-bar-night .modern-bar-popup .modern-bar-popup-value {
+    color: #fff2e0;
+}
+
+.modern-bar-popups.modern-bar-night .modern-bar-popup .modern-bar-popup-meter {
+    background-color: rgba(255, 162, 51, 0.14);
+}
+
+.modern-bar-popups.modern-bar-night .modern-bar-popup .modern-bar-popup-meter-fill {
+    background-color: #ffc46b;   /* softened from #ffa233 — solid fill */
+}
+
+/* Night's alert colour is the cold blue (see the palette table above), so it
+ * stays the one cool intrusion in Clu's warm world. */
+.modern-bar-popups.modern-bar-night .modern-bar-popup .modern-bar-popup-meter-alert {
+    background-color: #3d94e0;
+}
+
+.modern-bar-popups.modern-bar-night .modern-bar-popup .modern-bar-popup-value.modern-bar-alert {
+    color: #3d94e0;
+}
+
+.modern-bar-popups.modern-bar-night .modern-bar-popup .modern-bar-popup-caption {
+    color: rgba(232, 168, 96, 0.50);
+}
+
+.modern-bar-popups.modern-bar-night .modern-bar-popup .modern-bar-popup-separator {
+    background-color: rgba(255, 162, 51, 0.15);
+}
+
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle:focus,
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle:focus:checked,
+.modern-bar-popups.modern-bar-night .quick-settings .icon-button:focus,
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:focus,
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:focus,
+.modern-bar-popups.modern-bar-night .quick-settings .quick-slider .slider-bin:focus,
+.modern-bar-popups.modern-bar-night .quick-toggle-menu:focus,
+.modern-bar-popups.modern-bar-night .quick-toggle-menu .popup-menu-item:focus,
+.modern-bar-popups.modern-bar-night .calendar:focus,
+.modern-bar-popups.modern-bar-night .calendar .calendar-day:focus,
+.modern-bar-popups.modern-bar-night .calendar .calendar-day.calendar-today:focus,
+.modern-bar-popups.modern-bar-night .calendar .calendar-day-heading:focus,
+.modern-bar-popups.modern-bar-night .calendar .calendar-month-header .pager-button:focus,
+.modern-bar-popups.modern-bar-night .calendar .calendar-month-header .calendar-month-label:focus,
+.modern-bar-popups.modern-bar-night .datemenu-today-button:focus,
+.modern-bar-popups.modern-bar-night .datemenu-popover .events-button:focus,
+.modern-bar-popups.modern-bar-night .datemenu-popover .world-clocks-button:focus,
+.modern-bar-popups.modern-bar-night .datemenu-popover .weather-button:focus,
+.modern-bar-popups.modern-bar-night .message-list .message:focus,
+.modern-bar-popups.modern-bar-night .message-list .message-close-button:focus,
+.modern-bar-popups.modern-bar-night .message-list .message-expand-button:focus,
+.modern-bar-popups.modern-bar-night .message-list .message-collapse-button:focus,
+.modern-bar-popups.modern-bar-night .message-list-controls .message-list-clear-button:focus {
+    box-shadow: inset 0 0 0 2px rgba(255, 162, 51, 0.80) !important;
 }
