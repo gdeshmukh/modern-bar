@@ -114,9 +114,33 @@
 
     <key name="claude-refresh-seconds" type="i">
       <range min="10" max="3600"/>
-      <default>15</default>
+      <default>30</default>
       <summary>Claude usage refresh interval (seconds)</summary>
-      <description>How often to query the account usage endpoint. A few per minute is fine with the claude-code User-Agent (needed to keep up with heavy models like Fable); on any failure the metric keeps its last value and retries on a short backoff, so a too-fast setting degrades gracefully rather than breaking.</description>
+      <description>How often to query the account usage endpoint. 30s is the
+        shipped default because 15s was measured returning 429 rate_limit_error
+        repeatedly (worse with more than one shell session polling at once). The
+        floor is 10s for experimentation; failures keep the last value, cache it
+        across restarts and retry, so too-fast degrades to "stale" rather than
+        "gone".</description>
+    </key>
+
+    <!-- Cache so a cold start shows the last known number IMMEDIATELY instead of
+         a blank panel. Not exposed in prefs; written by the metric on success.
+         Without this, any throttled/failed first fetch after login means the
+         metric is simply absent, which is far worse than a slightly stale number
+         (the popup shows the true age, so nothing is hidden from the user). -->
+    <key name="claude-cache-percent" type="i">
+      <range min="-1" max="1000"/>
+      <default>-1</default>
+      <summary>Last known 5-hour utilization (cache)</summary>
+      <description>-1 = no cached value. Internal; not shown in prefs.</description>
+    </key>
+
+    <key name="claude-cache-time" type="x">
+      <default>0</default>
+      <summary>Unix time of the cached utilization</summary>
+      <description>Epoch seconds. The cache is ignored once older than an hour,
+        since the 5-hour window will have moved on. Internal; not in prefs.</description>
     </key>
 
     <key name="claude-warn-percent" type="i">

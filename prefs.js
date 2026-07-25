@@ -256,10 +256,15 @@ export default class ModernBarPreferences extends ExtensionPreferences {
         settings.bind('show-claude', showRow, 'active', Gio.SettingsBindFlags.DEFAULT);
         group.add(showRow);
 
+        // Range MUST track the schema (claude-refresh-seconds, 10..3600). It was
+        // left at lower:30 after the schema floor dropped to 10, so the UI clamped
+        // to 30 and — being a two-way binding — wrote 30 back over a real value of
+        // 15. If the schema range ever changes again, change it here too.
         const refreshRow = new Adw.SpinRow({
             title: 'Refresh interval (seconds)',
-            subtitle: 'The endpoint rate-limits; on failure the last value is kept and retried.',
-            adjustment: new Gtk.Adjustment({lower: 30, upper: 3600, step_increment: 30}),
+            subtitle: 'Below ~30s the endpoint starts rate-limiting; the last value ' +
+                'is kept and retried, so the number just goes stale rather than away.',
+            adjustment: new Gtk.Adjustment({lower: 10, upper: 3600, step_increment: 5}),
         });
         settings.bind('claude-refresh-seconds', refreshRow, 'value', Gio.SettingsBindFlags.DEFAULT);
         group.add(refreshRow);
