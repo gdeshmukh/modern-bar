@@ -380,6 +380,22 @@
     color: rgba(159, 232, 240, 0.45);
 }
 
+/* A has-menu pill (e.g. Wi-Fi, Wired) is TWO actors inside one rounded parent:
+ * .quick-toggle (radius 999px 0 0 999px) and .quick-toggle-menu-button
+ * (0 999px 999px 0). Ringing each half separately drew a 2px edge on BOTH sides
+ * of their shared border which, with the separator between them, read as three
+ * stacked vertical lines. Ring the PARENT once instead — one clean outline
+ * around the whole pill — and suppress the per-half rings inside it.
+ * Focus rings still win over this: they're !important. */
+.modern-bar-popups .quick-settings .quick-toggle-has-menu:checked {
+    box-shadow: inset 0 0 0 2px rgba(157, 250, 255, 0.45);
+}
+
+.modern-bar-popups .quick-settings .quick-toggle-has-menu:checked .quick-toggle,
+.modern-bar-popups .quick-settings .quick-toggle-has-menu:checked .quick-toggle-menu-button {
+    box-shadow: none;
+}
+
 /* The hairline between a menu-toggle's two halves. Now that a checked tile is
  * dark rather than solid cyan, the separator reads as cyan in both states. The
  * checked rule must out-specify stock's own (0,3,0), hence the extra anchor. */
@@ -881,6 +897,16 @@
     background-color: rgba(255, 196, 107, 0.08);
     box-shadow: inset 0 0 0 2px rgba(255, 196, 107, 0.24);
     color: rgba(232, 168, 96, 0.45);
+}
+
+/* Whole-pill outline on the parent — see the day-side note. */
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle-has-menu:checked {
+    box-shadow: inset 0 0 0 2px rgba(255, 196, 107, 0.45);
+}
+
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle-has-menu:checked .quick-toggle,
+.modern-bar-popups.modern-bar-night .quick-settings .quick-toggle-has-menu:checked .quick-toggle-menu-button {
+    box-shadow: none;
 }
 
 .modern-bar-popups.modern-bar-night .quick-settings .quick-toggle-has-menu .quick-toggle-separator {
