@@ -50,15 +50,19 @@
     </key>
 
     <key name="latitude" type="d">
+      <range min="-90.0" max="90.0"/>
       <default>37.77993</default>
       <summary>Weather latitude</summary>
-      <description>Latitude used for the Open-Meteo weather query.</description>
+      <description>Latitude used for the Open-Meteo weather query. Usually set
+        by geocoding the location name in prefs; directly editable there too
+        (offline / privacy / geocoder-down fallback).</description>
     </key>
 
     <key name="longitude" type="d">
+      <range min="-180.0" max="180.0"/>
       <default>-121.97802</default>
       <summary>Weather longitude</summary>
-      <description>Longitude used for the Open-Meteo weather query.</description>
+      <description>Longitude used for the Open-Meteo weather query. See latitude.</description>
     </key>
 
     <key name="temperature-unit" type="s">
