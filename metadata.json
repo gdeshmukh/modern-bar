@@ -3,7 +3,6 @@
   "name": "Modern Bar",
   "description": "Themes the GNOME top panel to match a flat neon-on-near-black terminal aesthetic (Tron day / Clu night palettes, themed Quick Settings and calendar), and adds a compact metrics cluster: CPU, workday progress, weather, and Claude usage — each with a click-open detail dropdown.",
   "shell-version": ["50"],
-  "session-modes": ["user"],
   "url": "https://github.com/gdesh/modern-bar",
   "version-name": "0.3.0",
   "settings-schema": "org.gnome.shell.extensions.modernbar",

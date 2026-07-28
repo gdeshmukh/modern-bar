@@ -3,7 +3,8 @@
 // Lifecycle + wiring. The panel look lives in stylesheet.css (auto-loaded).
 // This file:
 //   1. tags #panel with CSS classes so the look can be toggled from here,
-//      including the day/night (Tron/Clu) palette (night-mode in prefs)
+//      including the circuit palette (`palette` enum in prefs; `night-mode`
+//      survives only as a deprecated scripting alias)
 //   2. collapses the Activities button (Super key still opens the Overview)
 //   3. mounts the metrics cluster (CPU / Workday / Weather) on the LEFT, where
 //      Activities was; each reads config from GSettings and tears down its own
@@ -34,7 +35,6 @@ const UNDERGLOW = false;
 
 const PANEL_CLASS = 'modern-bar';
 const UNDERGLOW_CLASS = 'modern-bar-underglow';
-const NIGHT_CLASS = 'modern-bar-night';
 
 // Scope class for the panel DROPDOWNS (Quick Settings + clock/calendar).
 //
@@ -63,22 +63,70 @@ export default class ModernBarExtension extends Extension {
         if (UNDERGLOW)
             Main.panel.add_style_class_name(UNDERGLOW_CLASS);
 
-        // 1b. Day/night (Tron/Clu) palette. `night-mode` is a plain GSettings
-        //     boolean exposed in prefs (Palette group) — the only outward-facing
-        //     toggle. Flipping it just adds/removes a CSS class; see
-        //     stylesheet.css's .modern-bar-night rules for the actual colors.
-        //     No file-watching here — that's a personal convenience some users
-        //     may wire up themselves (e.g. a shell script that also runs
-        //     `gsettings set org.gnome.shell.extensions.modernbar night-mode ...`),
-        //     not something the extension does on anyone's behalf.
-        //     The night class is applied to BOTH #panel and uiGroup — see
-        //     POPUP_CLASS above for why one node can't cover both.
-        this._syncNightClass();
-        this._syncPopupClass();
-        this._settingsIds = [
-            this._settings.connect('changed::night-mode', () => this._syncNightClass()),
-            this._settings.connect('changed::theme-popups', () => this._syncPopupClass()),
-        ];
+        // 1b. Circuit palette. `palette` is a GSettings enum (tron/iso/clu/…,
+        //     see the schema for the canon meanings); switching it just swaps a
+        //     `.modern-bar-<name>` CSS class — every palette shares the same
+        //     background, only the circuit color changes (stylesheet.css is
+        //     GENERATED per palette by build/gen-stylesheet.js).
+        //     The class is applied to BOTH #panel and uiGroup — see POPUP_CLASS
+        //     above for why one node can't cover both.
+        //
+        //     The valid names come from the schema's own <choices> — one source
+        //     of truth shared with prefs and the generator's roster.
+        //
+        //     Guarded: with the symlink dev setup, a pulled/edited schema XML
+        //     whose gschemas.compiled wasn't refreshed (`make schemas`) would
+        //     make get_key('palette') a FATAL g_error — aborting gnome-shell,
+        //     i.e. the whole Wayland session, at login. Degrade to "no palette
+        //     classes" instead; the bar just loses its circuit color until the
+        //     schema is recompiled.
+        if (!this._settings.settings_schema.has_key('palette')) {
+            console.error('modern-bar: compiled schema is stale (no "palette" ' +
+                'key) — run `make schemas`; palette theming disabled');
+            this._paletteNames = [];
+            this._settingsIds = [
+                this._settings.connect('changed::theme-popups', () => this._syncPopupClass()),
+            ];
+            this._syncPopupClass();
+        } else {
+            this._paletteNames = this._schemaChoices('palette');
+
+            // One-time migration: a pre-palette setup that had night-mode on
+            // gets its gold successor instead of silently resetting to tron.
+            // Only when `palette` has never been explicitly written
+            // (get_user_value == null).
+            if (this._settings.get_user_value('palette') === null &&
+                this._settings.get_boolean('night-mode'))
+                this._settings.set_string('palette', 'clu');
+
+            this._syncPaletteClass();
+            this._syncPopupClass();
+            // The alias must act only on a real FLIP (the schema's "when this
+            // key CHANGES" contract). changed:: alone isn't that: GSettings
+            // only suppresses equal-value writes when a user value already
+            // exists — writing the default to an UNSET key is a real write
+            // that emits changed::, and without this guard a first-ever
+            // `tron-theme day` would stomp a hand-picked palette with 'tron'.
+            this._lastNightMode = this._settings.get_boolean('night-mode');
+            this._settingsIds = [
+                this._settings.connect('changed::palette', () => this._syncPaletteClass()),
+                // Deprecated alias, kept so existing scripts (e.g. a kitty
+                // theme switcher running `gsettings set … night-mode …`) keep
+                // flipping the bar: a FLIP maps onto the two classic palettes.
+                this._settings.connect('changed::night-mode', () => {
+                    const night = this._settings.get_boolean('night-mode');
+                    if (night === this._lastNightMode)
+                        return;
+                    this._lastNightMode = night;
+                    const mapped = night ? 'clu' : 'tron';
+                    // Equality guard: skip the no-op write so e.g. "Reset all"
+                    // can't re-create a user value equal to the default.
+                    if (this._settings.get_string('palette') !== mapped)
+                        this._settings.set_string('palette', mapped);
+                }),
+                this._settings.connect('changed::theme-popups', () => this._syncPopupClass()),
+            ];
+        }
 
         // NOTE: Tray / app-indicators are left VISIBLE. They sit on the right
         // near Quick Settings (the traditional spot) and balance the left-side
@@ -143,18 +191,31 @@ export default class ModernBarExtension extends Extension {
         Main.panel._leftBox.insert_child_at_index(this._metricsBox, 0);
     }
 
-    // Add/remove NIGHT_CLASS to match the night-mode GSettings key. Purely a CSS
-    // class swap — see stylesheet.css's .modern-bar-night rules.
+    // The palette key's valid values, straight from the schema's <choices>
+    // (get_range() on an enum-ish string key returns ('enum', [values…])).
+    _schemaChoices(key) {
+        const [type, values] =
+            this._settings.settings_schema.get_key(key).get_range().recursiveUnpack();
+        if (type !== 'enum')
+            throw new Error(`Schema key ${key} has no <choices>`);
+        return values;
+    }
+
+    // Swap `.modern-bar-<palette>` to match the palette GSettings key. Purely a
+    // CSS class swap — the color blocks live in the generated stylesheet.css.
     //
     // Applied to BOTH nodes: #panel styles the bar, uiGroup styles the dropdowns.
     // They are siblings, so neither one alone covers both (see POPUP_CLASS).
-    _syncNightClass() {
-        const night = this._settings.get_boolean('night-mode');
+    _syncPaletteClass() {
+        let current = this._settings.get_string('palette');
+        if (!this._paletteNames.includes(current))
+            current = 'tron';   // schema choices make this unreachable; belt+braces
         for (const actor of [Main.panel, Main.uiGroup]) {
-            if (night)
-                actor.add_style_class_name(NIGHT_CLASS);
-            else
-                actor.remove_style_class_name(NIGHT_CLASS);
+            for (const name of this._paletteNames) {
+                if (name !== current)
+                    actor.remove_style_class_name(`modern-bar-${name}`);
+            }
+            actor.add_style_class_name(`modern-bar-${current}`);
         }
     }
 
@@ -189,10 +250,13 @@ export default class ModernBarExtension extends Extension {
                 this._settings.disconnect(id);
         }
         this._settingsIds = null;
-        Main.panel.remove_style_class_name(NIGHT_CLASS);
-        // uiGroup outlives the extension, so both of our classes must come off
-        // it here or they'd linger (and keep restyling popups) after disable().
-        Main.uiGroup.remove_style_class_name(NIGHT_CLASS);
+        // uiGroup outlives the extension, so every class we put on it must come
+        // off here or it would linger (and keep restyling popups) after disable().
+        for (const name of this._paletteNames ?? []) {
+            Main.panel.remove_style_class_name(`modern-bar-${name}`);
+            Main.uiGroup.remove_style_class_name(`modern-bar-${name}`);
+        }
+        this._paletteNames = null;
         Main.uiGroup.remove_style_class_name(POPUP_CLASS);
         this._settings = null;
 

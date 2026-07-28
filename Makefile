@@ -9,14 +9,22 @@
 UUID = modernbar@gdesh.com
 ZIP  = $(UUID).shell-extension.zip
 
-.PHONY: schemas pack install clean
+.PHONY: schemas stylesheet pack install clean
 
 # Compile the schema in place — needed for the symlink dev setup after any
-# .gschema.xml change (`pack` runs its own compile inside the zip).
+# .gschema.xml change. (The packed zip ships only the .xml — correct for
+# GNOME 44+: the installer runs glib-compile-schemas itself at install time.)
 schemas:
 	glib-compile-schemas --strict schemas/
 
-pack: schemas
+# Regenerate stylesheet.css (a COMMITTED build artifact — never hand-edit it)
+# and tools/palette-preview.html from the palette table in the generator.
+# Validates contrast floors; fails loudly if a palette goes unreadable.
+stylesheet:
+	gjs -m build/gen-stylesheet.js
+
+# stylesheet is a dependency so an edited palette table can never ship stale.
+pack: schemas stylesheet
 	gnome-extensions pack --force \
 		--extra-source=lib \
 		--extra-source=icons \

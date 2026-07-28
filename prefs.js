@@ -39,7 +39,7 @@ export default class ModernBarPreferences extends ExtensionPreferences {
         });
 
         window.search_enabled = true;
-        window.add(this._buildAppearancePage(settings));
+        window.add(this._buildAppearancePage(settings, track));
         window.add(this._buildMetricsPage(settings, window, track));
         window.add(this._buildAboutPage(settings, window));
     }
@@ -93,8 +93,18 @@ export default class ModernBarPreferences extends ExtensionPreferences {
         return [group, addRow];
     }
 
+    // Valid values of an enum-ish string key, from the schema's own <choices>
+    // (same single-source-of-truth rule as the spin ranges).
+    _schemaChoices(settings, key) {
+        const [type, values] =
+            settings.settings_schema.get_key(key).get_range().recursiveUnpack();
+        if (type !== 'enum')
+            throw new Error(`Schema key ${key} declares no <choices>`);
+        return values;
+    }
+
     // ── Page 1: Appearance ──────────────────────────────────────────────────
-    _buildAppearancePage(settings) {
+    _buildAppearancePage(settings, track) {
         const page = new Adw.PreferencesPage({
             title: _('Appearance'),
             icon_name: 'applications-graphics-symbolic',
@@ -102,17 +112,51 @@ export default class ModernBarPreferences extends ExtensionPreferences {
 
         const group = new Adw.PreferencesGroup({
             title: _('Palette'),
-            description: _('Tron (day, cyan) or Clu (night, amber), matching ' +
-                'a flat neon-on-near-black terminal.'),
+            description: _('One shared deep-black grid; choose the circuit ' +
+                'color that glows on it. Colors follow the Program lore.'),
         });
         page.add(group);
 
-        const nightRow = new Adw.SwitchRow({
-            title: _('Clu / night palette'),
-            subtitle: _('Off: Tron day (cyan). On: Clu night (amber).'),
+        // Display name + lore per schema value. Anything the schema adds that
+        // this table doesn't know yet still shows (as its raw name) rather
+        // than breaking the row.
+        const info = {
+            tron: [_('Tron'), _('Blue — fights for the Users')],
+            iso: [_('ISO'), _('White — the ISOs and the Users')],
+            clu: [_('Clu'), _('Gold — the system administrator')],
+            rinzler: [_('Rinzler'), _('Orange — repurposed to serve Clu')],
+            sark: [_('Sark'), _('Red — loyal to the MCP')],
+            military: [_('Military'), _('Teal green — the tank drivers of ’82')],
+            utility: [_('Utility'), _('Violet — data pushers and system utilities')],
+        };
+        const values = this._schemaChoices(settings, 'palette');
+
+        const paletteRow = new Adw.ComboRow({
+            title: _('Circuit color'),
+            model: new Gtk.StringList({
+                strings: values.map(v => info[v]?.[0] ?? v),
+            }),
         });
-        settings.bind('night-mode', nightRow, 'active', Gio.SettingsBindFlags.DEFAULT);
-        group.add(nightRow);
+        const syncLore = () =>
+            paletteRow.set_subtitle(info[values[paletteRow.selected]]?.[1] ?? '');
+        const syncFromKey = () => {
+            const want = Math.max(0, values.indexOf(settings.get_string('palette')));
+            if (paletteRow.selected !== want)
+                paletteRow.selected = want;
+            syncLore();
+        };
+        syncFromKey();
+        paletteRow.connect('notify::selected', () => {
+            // Equality guard on every widget→key write in this file: a write
+            // of the CURRENT value is not always a no-op — on a freshly reset
+            // (unset) key it re-creates a user value and emits changed::, so
+            // an unguarded echo here would quietly dirty "Reset all".
+            if (settings.get_string('palette') !== values[paletteRow.selected])
+                settings.set_string('palette', values[paletteRow.selected]);
+            syncLore();
+        });
+        track(settings.connect('changed::palette', syncFromKey));
+        group.add(paletteRow);
 
         // Popups are styled from stock GNOME selectors that can shift between
         // shell releases, so they get their own switch — turn this off and the
@@ -207,12 +251,14 @@ export default class ModernBarPreferences extends ExtensionPreferences {
         };
         sync();
 
-        // No feedback loop: committing an unchanged "HH:MM" is a no-op write,
-        // so GSettings emits no changed:: and sync() never re-fires.
+        // Equality-guarded (see the palette row): a same-value write only
+        // no-ops when a user value exists; on an unset key it would re-create
+        // one and re-fire changed::.
         const commit = () => {
             const hh = String(hour.get_value_as_int()).padStart(2, '0');
             const mm = String(min.get_value_as_int()).padStart(2, '0');
-            settings.set_string(key, `${hh}:${mm}`);
+            if (settings.get_string(key) !== `${hh}:${mm}`)
+                settings.set_string(key, `${hh}:${mm}`);
         };
         hour.connect('value-changed', commit);
         min.connect('value-changed', commit);
@@ -292,8 +338,9 @@ export default class ModernBarPreferences extends ExtensionPreferences {
         };
         syncUnit();
         unitRow.connect('notify::selected', () => {
-            settings.set_string('temperature-unit',
-                unitRow.selected === 1 ? 'celsius' : 'fahrenheit');
+            const want = unitRow.selected === 1 ? 'celsius' : 'fahrenheit';
+            if (settings.get_string('temperature-unit') !== want)
+                settings.set_string('temperature-unit', want);
         });
         track(settings.connect('changed::temperature-unit', syncUnit));
         addRow(unitRow);
@@ -447,10 +494,15 @@ export default class ModernBarPreferences extends ExtensionPreferences {
     }
 
     _resetAll(settings) {
+        // night-mode first, deterministically: resetting it can fire the
+        // extension's alias handler, and doing that BEFORE palette resets
+        // means any write it makes is cleared by the palette reset below —
+        // rather than depending on list_keys() hash order.
+        settings.reset('night-mode');
         for (const key of settings.settings_schema.list_keys()) {
             // The usage cache is state, not preference — wiping it would blank
             // the panel number for no user benefit.
-            if (key.startsWith('claude-cache-'))
+            if (key.startsWith('claude-cache-') || key === 'night-mode')
                 continue;
             settings.reset(key);
         }

@@ -3,14 +3,33 @@
   <schema id="org.gnome.shell.extensions.modernbar"
           path="/org/gnome/shell/extensions/modernbar/">
 
-    <!-- ── Palette (Tron/Clu color scheme) ────────────────────────────────── -->
+    <!-- ── Palette (canon circuitry colors) ───────────────────────────────── -->
+    <key name="palette" type="s">
+      <choices>
+        <choice value="tron"/>
+        <choice value="iso"/>
+        <choice value="clu"/>
+        <choice value="rinzler"/>
+        <choice value="sark"/>
+        <choice value="military"/>
+        <choice value="utility"/>
+      </choices>
+      <default>'tron'</default>
+      <summary>Circuit palette</summary>
+      <description>Which canon circuitry color the bar wears. The background is
+        the same blueish deep black for every choice — only the circuit color
+        changes. Values follow the Program lore: tron (blue), iso (white),
+        clu (gold), rinzler (orange), sark (red), military (teal green),
+        utility (violet). Scriptable via
+        `gsettings set org.gnome.shell.extensions.modernbar palette clu`.</description>
+    </key>
+
     <key name="night-mode" type="b">
       <default>false</default>
-      <summary>Clu/night palette</summary>
-      <description>false = Tron day (cyan). true = Clu night (amber). Plain
-        toggle exposed in prefs; can also be set externally with
-        `gsettings set org.gnome.shell.extensions.modernbar night-mode true|false`
-        for scripting a personal sync (e.g. to a terminal theme switcher).</description>
+      <summary>Deprecated day/night alias (use `palette`)</summary>
+      <description>Kept so existing scripts keep working: when this key CHANGES,
+        the extension maps true → palette 'clu' and false → palette 'tron'.
+        Not shown in prefs; new scripts should set `palette` directly.</description>
     </key>
 
     <key name="theme-popups" type="b">
