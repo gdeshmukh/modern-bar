@@ -323,27 +323,19 @@ function sharedBlock() {
     font-family: "JetBrains Mono", monospace;
 }
 
-/* Tile width — the SECOND deliberate geometry exception, and a direct
- * consequence of the first: stock sets min-width AND max-width 12em on tiles,
- * sized for Cantarell. JetBrains Mono is wider, and the longest stock title
- * ("Do Not Disturb") measures 12.14em uncapped (tools/qsprobe.js) — so under
- * stock's cap it ellipsised on the live pane ("Do Not Distu…"). 13em fits it
- * with headroom; min = max keeps stock's uniform-tile mechanism intact, and
- * the pane only grows ~2em total. Long DYNAMIC content (SSID subtitles etc.)
- * still ellipsises, which is correct — this is sized for the fixed titles. */
-.modern-bar-popups .quick-settings .quick-toggle,
-.modern-bar-popups .quick-settings .quick-toggle-has-menu {
-    min-width: 13em;
-    max-width: 13em;
-}
-
-/* The inner half of a has-menu pill must stay free-width inside its parent
- * (stock sets it auto; restated here only because the rule above raises the
- * bare .quick-toggle bound that stock's auto would otherwise inherit from). */
-.modern-bar-popups .quick-settings .quick-toggle-has-menu .quick-toggle {
-    min-width: auto;
-    max-width: auto;
-}
+/* Tile width — deliberately NOT overridden. JetBrains Mono is wider than
+ * Cantarell, so the longest stock title ("Do Not Disturb") measures 12.14em
+ * against stock's 12em cap (tools/qsprobe.js) and ellipsises to "Do Not
+ * Distu…". A 13em cap was tried and reverted: it fixed that one title but not
+ * a has-menu pill like Power Mode/Balanced, which wants 14.11em, so it bought
+ * an inconsistent pane and a geometry exception in exchange for nothing.
+ *
+ * Abbreviating IS what GNOME does here — quickSettings.js sets
+ * clutter_text.ellipsize = Pango.EllipsizeMode.END on the title, and the
+ * 12em min = max is stock's uniform-tile mechanism. Deferring to it keeps the
+ * pane's grid identical to every other GNOME install and leaves us with zero
+ * geometry overrides on GNOME's own QS widgets, which is what lets a shell
+ * upgrade move this layout without clipping us. */
 
 .modern-bar-popups .modern-bar-popup .modern-bar-popup-header {
     font-size: 8.5pt;
@@ -671,6 +663,47 @@ ${R} .quick-settings .quick-toggle-has-menu:checked {
 
 ${R} .quick-settings .quick-toggle-has-menu:checked .quick-toggle,
 ${R} .quick-settings .quick-toggle-has-menu:checked .quick-toggle-menu-button {
+    background-color: transparent;
+    box-shadow: none;
+}
+
+/* ── Never paint a HALF of a has-menu pill ─────────────────────────────────
+ * Corollary of the parent-ring rule above, and the fix for the live "hovering
+ * the arrow lights up the middle line weirdly" bug (2026-07-29).
+ *
+ * Any fill or ring on ONE half terminates exactly at the 1px separator, so the
+ * fill edge and the separator render as a doubled vertical line down the
+ * pill's centre. The rule above already avoids this for a checked PARENT;
+ * these states were missed because they key off the HALF: :hover and :active
+ * on either half, and the menu button's own :checked, which St sets while its
+ * sub-menu is open — i.e. precisely the arrow-click path.
+ *
+ * So the wash moves to the parent (an St.Button, so it tracks :hover for the
+ * whole pill — QuickSettingsItem extends St.Button, verified in the shell's
+ * quickSettings.js), and the halves paint nothing. Per-half feedback survives
+ * through CONTENT colour, set by the shared hover/active rules further up:
+ * only the half under the pointer takes the deep accent, and colour has no
+ * edge to seam against.
+ *
+ * :focus is deliberately EXCLUDED from the suppression list — a focus ring
+ * must stay unmistakable (design rule 8 exempts it), and it is worth a seam. */
+${R} .quick-settings .quick-toggle-has-menu:hover {
+    background-color: ${rgba(p.deep, 0.06)};
+}
+
+${R} .quick-settings .quick-toggle-has-menu:active {
+    background-color: ${rgba(p.deep, 0.11)};
+}
+
+${R} .quick-settings .quick-toggle-has-menu .quick-toggle:hover,
+${R} .quick-settings .quick-toggle-has-menu .quick-toggle:active,
+${R} .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:hover,
+${R} .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:active,
+${R} .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked,
+${R} .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:hover,
+${R} .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:active,
+${R} .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:active:hover {
+    background-color: transparent;
     box-shadow: none;
 }
 
