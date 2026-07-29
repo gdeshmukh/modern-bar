@@ -42,6 +42,18 @@
         one-flip escape hatch that does not require disabling the extension.</description>
     </key>
 
+    <key name="dismiss-on-leave" type="b">
+      <default>true</default>
+      <summary>Close dropdowns when the pointer leaves</summary>
+      <description>Close the Quick Settings and clock/calendar dropdowns when the
+        pointer moves away from them, matching how the metric dropdowns behave.
+        Click-outside, Escape and keyboard navigation are unchanged — this only adds
+        a reason to close. Dismissal is suppressed while a mouse button is held, so
+        dragging a slider past the pane edge is safe, and it only takes effect once
+        the pointer has entered the dropdown, so menus opened from the keyboard are
+        left alone.</description>
+    </key>
+
     <!-- ── Workday metric ─────────────────────────────────────────────── -->
     <key name="work-start" type="s">
       <default>'09:00'</default>

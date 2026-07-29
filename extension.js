@@ -22,6 +22,7 @@ import {WorkdayMetric} from './lib/workdayMetric.js';
 import {WeatherMetric} from './lib/weatherMetric.js';
 import {ClaudeMetric} from './lib/claudeMetric.js';
 import {MetricPopupGroup} from './lib/metricPopup.js';
+import {MenuProximityDismiss} from './lib/menuProximity.js';
 
 // ── Look toggles ────────────────────────────────────────────────────────────
 // Flip this and re-toggle the extension to compare the panel with/without the
@@ -189,6 +190,18 @@ export default class ModernBarExtension extends Extension {
 
         // Insert at the start of the panel's left box (leftmost position).
         Main.panel._leftBox.insert_child_at_index(this._metricsBox, 0);
+
+        // 4. Mouse-away dismissal for the SHELL's own dropdowns, so Quick
+        //    Settings and the calendar feel like the metric popups. Purely
+        //    additive — click-outside, Escape and keyboard nav are untouched;
+        //    see lib/menuProximity.js for why it arms on pointer contact and
+        //    stands down while a button is held.
+        //
+        //    has_key-guarded for the same reason the palette block is: with the
+        //    symlink dev setup a pulled schema whose gschemas.compiled wasn't
+        //    refreshed would make this a FATAL g_error at login.
+        if (this._settings.settings_schema.has_key('dismiss-on-leave'))
+            this._menuDismiss = new MenuProximityDismiss(this._settings);
     }
 
     // The palette key's valid values, straight from the schema's <choices>
@@ -230,6 +243,13 @@ export default class ModernBarExtension extends Extension {
     }
 
     disable() {
+        // Stop watching the shell's dropdowns first: this holds a signal on a
+        // menu that outlives us, and a live poll timer.
+        if (this._menuDismiss) {
+            this._menuDismiss.destroy();
+            this._menuDismiss = null;
+        }
+
         // Tear down the metrics cluster first (each metric stops its own timers
         // and disconnects its own settings signals in destroy()).
         if (this._metrics) {

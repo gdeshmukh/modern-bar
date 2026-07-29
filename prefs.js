@@ -169,6 +169,17 @@ export default class ModernBarPreferences extends ExtensionPreferences {
         settings.bind('theme-popups', popupRow, 'active', Gio.SettingsBindFlags.DEFAULT);
         group.add(popupRow);
 
+        // Behaviour, not colour, so it says plainly what it does NOT change —
+        // the worry with any dismissal tweak is losing click-outside or Escape.
+        const leaveRow = new Adw.SwitchRow({
+            title: _('Close dropdowns on mouse away'),
+            subtitle: _('Quick Settings and the clock/calendar menu close when ' +
+                'the pointer leaves, like the metric dropdowns. Clicking away, ' +
+                'Escape and keyboard navigation still work as usual.'),
+        });
+        settings.bind('dismiss-on-leave', leaveRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+        group.add(leaveRow);
+
         return page;
     }
 
