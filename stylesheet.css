@@ -114,6 +114,27 @@
     min-width: 180px;
 }
 
+/* ── Typeface for the GNOME dropdowns ───────────────────────────────────────
+ * The panel and our own metric popups have always been JetBrains Mono; Quick
+ * Settings and the calendar were left in the system face, which is why they
+ * read as a different product bolted underneath the bar.
+ *
+ * This is the ONE place the recolor-only rule is deliberately widened, and only
+ * to font-family. No font-size, no weight, no geometry: size is what stock uses
+ * to compute tile and cell metrics, so changing it is how you get clipping
+ * after a shell upgrade. Family alone still shifts text WIDTH, which is the
+ * live risk here — JetBrains Mono is wider than Cantarell, so a long
+ * title/subtitle pair ("Power Mode" / "Balanced") is the thing to check first
+ * if a label starts ellipsising.
+ *
+ * Scoped to the three dropdown roots, never a bare .popup-menu-content: that
+ * base is shared with the login screen, Looking Glass and modal dialogs. */
+.modern-bar-popups .quick-settings,
+.modern-bar-popups .quick-toggle-menu,
+.modern-bar-popups .datemenu-popover {
+    font-family: "JetBrains Mono", monospace;
+}
+
 .modern-bar-popups .modern-bar-popup .modern-bar-popup-header {
     font-size: 8.5pt;
     font-weight: bold;
@@ -277,9 +298,24 @@
     background-color: rgba(47, 240, 255, 0.02);
 }
 
-/* Interactive tiles (rest / hover / active / insensitive). The calendar day
- * cells are painted the surface grey by stock, so they're neutralised in the
- * calendar rules further down. */
+/* Interactive tiles — FILAMENT treatment.
+ *
+ * Rest carries NO fill and NO edge: an off toggle is the void with a label on
+ * it. That is the whole idea — the previous pass washed every tile in
+ * rgba(deep, 0.07), so ten pill tiles meant ten tinted slabs and the grid never
+ * returned to the void. Design rule 8 says accent intensity scales inversely
+ * with area; a resting wash is the largest-area accent in the whole theme.
+ *
+ * Feedback arrives only on interaction, and state is drawn as an EDGE, never a
+ * slab (see the :checked block). This matches how the panel buttons already
+ * behave (design rule 3: no highlight box in any state, the text powers up).
+ *
+ * Edges are inset box-shadows, never borders. A border would add to the box
+ * and shift stock's centred content by its width — inset shadows draw inside
+ * the existing geometry, which is what keeps this recolor-only.
+ *
+ * The calendar day cells are painted the surface grey by stock, so they're
+ * neutralised in the calendar rules further down. */
 .modern-bar-popups.modern-bar-tron .quick-settings .quick-toggle,
 .modern-bar-popups.modern-bar-tron .quick-settings .icon-button,
 .modern-bar-popups.modern-bar-tron .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button,
@@ -288,10 +324,14 @@
 .modern-bar-popups.modern-bar-tron .message-list .message-close-button,
 .modern-bar-popups.modern-bar-tron .message-list .message-expand-button,
 .modern-bar-popups.modern-bar-tron .message-list .message-collapse-button {
-    background-color: rgba(47, 240, 255, 0.07);
-    color: #9fe8f0;
+    background-color: transparent;
+    box-shadow: none;
+    color: rgba(159, 232, 240, 0.82);
 }
 
+/* Hover is the only place a resting tile gains a fill, and it is deliberately
+ * faint — enough to confirm the pointer is on a control (the tiles have no
+ * resting edge to highlight), not enough to read as a slab. */
 .modern-bar-popups.modern-bar-tron .quick-settings .quick-toggle:hover,
 .modern-bar-popups.modern-bar-tron .quick-settings .icon-button:hover,
 .modern-bar-popups.modern-bar-tron .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:hover,
@@ -300,7 +340,7 @@
 .modern-bar-popups.modern-bar-tron .message-list .message-close-button:hover,
 .modern-bar-popups.modern-bar-tron .message-list .message-expand-button:hover,
 .modern-bar-popups.modern-bar-tron .message-list .message-collapse-button:hover {
-    background-color: rgba(47, 240, 255, 0.14);
+    background-color: rgba(47, 240, 255, 0.06);
     color: #2ff0ff;
 }
 
@@ -312,7 +352,7 @@
 .modern-bar-popups.modern-bar-tron .message-list .message-close-button:active,
 .modern-bar-popups.modern-bar-tron .message-list .message-expand-button:active,
 .modern-bar-popups.modern-bar-tron .message-list .message-collapse-button:active {
-    background-color: rgba(47, 240, 255, 0.2);
+    background-color: rgba(47, 240, 255, 0.11);
     color: #2ff0ff;
 }
 
@@ -321,23 +361,33 @@
 .modern-bar-popups.modern-bar-tron .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:insensitive,
 .modern-bar-popups.modern-bar-tron .message-list-controls .message-list-clear-button:insensitive,
 .modern-bar-popups.modern-bar-tron .datemenu-popover .events-button:insensitive {
-    background-color: rgba(47, 240, 255, 0.03);
-    color: rgba(159, 232, 240, 0.38);
+    background-color: transparent;
+    box-shadow: none;
+    color: rgba(159, 232, 240, 0.34);
 }
 
 /* The "on" state — every one of these derives from -st-accent-color in stock,
- * so ALL must be restated or the missed ones keep the system accent. LARGE
- * tiles get a quiet wash + a lit 2px edge; text stays the DEEP accent (the
- * pale variant is too close to rest to read as a state change). */
+ * so ALL must be restated or the missed ones keep the system accent.
+ *
+ * FILAMENT: no fill at all. State is a 2px lit ring on the pill edge plus deep
+ * text. Full-saturation accent is fine here precisely because a hairline is a
+ * tiny area (design rule 8) — the same colour across a 12em x 3.27em fill is
+ * the wall of neon that rule exists to prevent. The ring reads as a circuit
+ * carrying current, which is the thing being aimed at.
+ *
+ * Text stays the DEEP accent, not the pale variant: pale sits a few points off
+ * the resting colour and stops reading as a change at all. */
 .modern-bar-popups.modern-bar-tron .quick-settings .quick-toggle:checked,
 .modern-bar-popups.modern-bar-tron .quick-settings .quick-toggle:focus:checked,
 .modern-bar-popups.modern-bar-tron .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked,
 .modern-bar-popups.modern-bar-tron .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:focus {
-    background-color: rgba(157, 250, 255, 0.13);
-    box-shadow: inset 0 0 0 2px rgba(157, 250, 255, 0.45);
+    background-color: transparent;
+    box-shadow: inset 0 0 0 2px rgba(47, 240, 255, 0.85);
     color: #2ff0ff;
 }
 
+/* Hovering an already-on tile: the ring goes full strength and the faintest
+ * wash appears, so on+hover is still distinguishable from on. */
 .modern-bar-popups.modern-bar-tron .quick-settings .quick-toggle:hover:checked,
 .modern-bar-popups.modern-bar-tron .quick-settings .quick-toggle:focus:hover:checked,
 .modern-bar-popups.modern-bar-tron .quick-settings .quick-toggle:active:checked,
@@ -348,8 +398,8 @@
 .modern-bar-popups.modern-bar-tron .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:active,
 .modern-bar-popups.modern-bar-tron .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:active:hover,
 .modern-bar-popups.modern-bar-tron .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:active:focus {
-    background-color: rgba(157, 250, 255, 0.2);
-    box-shadow: inset 0 0 0 2px rgba(157, 250, 255, 0.62);
+    background-color: rgba(47, 240, 255, 0.08);
+    box-shadow: inset 0 0 0 2px #2ff0ff;
     color: #2ff0ff;
 }
 
@@ -372,16 +422,18 @@
     color: rgba(159, 232, 240, 0.75);
 }
 
+/* On but unavailable: the ring survives so state is still readable, dimmed to
+ * match the text. */
 .modern-bar-popups.modern-bar-tron .quick-settings .quick-toggle:insensitive:checked {
-    background-color: rgba(157, 250, 255, 0.08);
-    box-shadow: inset 0 0 0 2px rgba(157, 250, 255, 0.24);
-    color: rgba(159, 232, 240, 0.45);
+    background-color: transparent;
+    box-shadow: inset 0 0 0 2px rgba(47, 240, 255, 0.28);
+    color: rgba(159, 232, 240, 0.4);
 }
 
 /* A has-menu pill is TWO actors in one rounded parent — ring the PARENT once
  * (per-half rings drew three stacked lines with the separator). */
 .modern-bar-popups.modern-bar-tron .quick-settings .quick-toggle-has-menu:checked {
-    box-shadow: inset 0 0 0 2px rgba(157, 250, 255, 0.45);
+    box-shadow: inset 0 0 0 2px rgba(47, 240, 255, 0.85);
 }
 
 .modern-bar-popups.modern-bar-tron .quick-settings .quick-toggle-has-menu:checked .quick-toggle,
@@ -389,11 +441,13 @@
     box-shadow: none;
 }
 
+/* The divider between a has-menu pill's two halves. Dim at rest — with no tile
+ * edges to relate to it would otherwise be the only line on an off tile. */
 .modern-bar-popups.modern-bar-tron .quick-settings .quick-toggle-has-menu .quick-toggle-separator {
-    background-color: rgba(157, 250, 255, 0.22);
+    background-color: rgba(159, 232, 240, 0.16);
 }
 .modern-bar-popups.modern-bar-tron .quick-settings .quick-toggle-has-menu:checked .quick-toggle-separator {
-    background-color: rgba(157, 250, 255, 0.42);
+    background-color: rgba(47, 240, 255, 0.55);
 }
 
 /* Sliders — the fill is an St-specific property, the handle is plain color.
@@ -735,9 +789,24 @@
     background-color: rgba(255, 255, 255, 0.02);
 }
 
-/* Interactive tiles (rest / hover / active / insensitive). The calendar day
- * cells are painted the surface grey by stock, so they're neutralised in the
- * calendar rules further down. */
+/* Interactive tiles — FILAMENT treatment.
+ *
+ * Rest carries NO fill and NO edge: an off toggle is the void with a label on
+ * it. That is the whole idea — the previous pass washed every tile in
+ * rgba(deep, 0.07), so ten pill tiles meant ten tinted slabs and the grid never
+ * returned to the void. Design rule 8 says accent intensity scales inversely
+ * with area; a resting wash is the largest-area accent in the whole theme.
+ *
+ * Feedback arrives only on interaction, and state is drawn as an EDGE, never a
+ * slab (see the :checked block). This matches how the panel buttons already
+ * behave (design rule 3: no highlight box in any state, the text powers up).
+ *
+ * Edges are inset box-shadows, never borders. A border would add to the box
+ * and shift stock's centred content by its width — inset shadows draw inside
+ * the existing geometry, which is what keeps this recolor-only.
+ *
+ * The calendar day cells are painted the surface grey by stock, so they're
+ * neutralised in the calendar rules further down. */
 .modern-bar-popups.modern-bar-iso .quick-settings .quick-toggle,
 .modern-bar-popups.modern-bar-iso .quick-settings .icon-button,
 .modern-bar-popups.modern-bar-iso .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button,
@@ -746,10 +815,14 @@
 .modern-bar-popups.modern-bar-iso .message-list .message-close-button,
 .modern-bar-popups.modern-bar-iso .message-list .message-expand-button,
 .modern-bar-popups.modern-bar-iso .message-list .message-collapse-button {
-    background-color: rgba(255, 255, 255, 0.07);
-    color: #c9d6db;
+    background-color: transparent;
+    box-shadow: none;
+    color: rgba(201, 214, 219, 0.82);
 }
 
+/* Hover is the only place a resting tile gains a fill, and it is deliberately
+ * faint — enough to confirm the pointer is on a control (the tiles have no
+ * resting edge to highlight), not enough to read as a slab. */
 .modern-bar-popups.modern-bar-iso .quick-settings .quick-toggle:hover,
 .modern-bar-popups.modern-bar-iso .quick-settings .icon-button:hover,
 .modern-bar-popups.modern-bar-iso .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:hover,
@@ -758,7 +831,7 @@
 .modern-bar-popups.modern-bar-iso .message-list .message-close-button:hover,
 .modern-bar-popups.modern-bar-iso .message-list .message-expand-button:hover,
 .modern-bar-popups.modern-bar-iso .message-list .message-collapse-button:hover {
-    background-color: rgba(255, 255, 255, 0.14);
+    background-color: rgba(255, 255, 255, 0.06);
     color: #ffffff;
 }
 
@@ -770,7 +843,7 @@
 .modern-bar-popups.modern-bar-iso .message-list .message-close-button:active,
 .modern-bar-popups.modern-bar-iso .message-list .message-expand-button:active,
 .modern-bar-popups.modern-bar-iso .message-list .message-collapse-button:active {
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.11);
     color: #ffffff;
 }
 
@@ -779,23 +852,33 @@
 .modern-bar-popups.modern-bar-iso .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:insensitive,
 .modern-bar-popups.modern-bar-iso .message-list-controls .message-list-clear-button:insensitive,
 .modern-bar-popups.modern-bar-iso .datemenu-popover .events-button:insensitive {
-    background-color: rgba(255, 255, 255, 0.03);
-    color: rgba(201, 214, 219, 0.38);
+    background-color: transparent;
+    box-shadow: none;
+    color: rgba(201, 214, 219, 0.34);
 }
 
 /* The "on" state — every one of these derives from -st-accent-color in stock,
- * so ALL must be restated or the missed ones keep the system accent. LARGE
- * tiles get a quiet wash + a lit 2px edge; text stays the DEEP accent (the
- * pale variant is too close to rest to read as a state change). */
+ * so ALL must be restated or the missed ones keep the system accent.
+ *
+ * FILAMENT: no fill at all. State is a 2px lit ring on the pill edge plus deep
+ * text. Full-saturation accent is fine here precisely because a hairline is a
+ * tiny area (design rule 8) — the same colour across a 12em x 3.27em fill is
+ * the wall of neon that rule exists to prevent. The ring reads as a circuit
+ * carrying current, which is the thing being aimed at.
+ *
+ * Text stays the DEEP accent, not the pale variant: pale sits a few points off
+ * the resting colour and stops reading as a change at all. */
 .modern-bar-popups.modern-bar-iso .quick-settings .quick-toggle:checked,
 .modern-bar-popups.modern-bar-iso .quick-settings .quick-toggle:focus:checked,
 .modern-bar-popups.modern-bar-iso .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked,
 .modern-bar-popups.modern-bar-iso .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:focus {
-    background-color: rgba(220, 227, 230, 0.13);
-    box-shadow: inset 0 0 0 2px rgba(220, 227, 230, 0.45);
+    background-color: transparent;
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.85);
     color: #ffffff;
 }
 
+/* Hovering an already-on tile: the ring goes full strength and the faintest
+ * wash appears, so on+hover is still distinguishable from on. */
 .modern-bar-popups.modern-bar-iso .quick-settings .quick-toggle:hover:checked,
 .modern-bar-popups.modern-bar-iso .quick-settings .quick-toggle:focus:hover:checked,
 .modern-bar-popups.modern-bar-iso .quick-settings .quick-toggle:active:checked,
@@ -806,8 +889,8 @@
 .modern-bar-popups.modern-bar-iso .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:active,
 .modern-bar-popups.modern-bar-iso .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:active:hover,
 .modern-bar-popups.modern-bar-iso .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:active:focus {
-    background-color: rgba(220, 227, 230, 0.2);
-    box-shadow: inset 0 0 0 2px rgba(220, 227, 230, 0.62);
+    background-color: rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 0 0 2px #ffffff;
     color: #ffffff;
 }
 
@@ -830,16 +913,18 @@
     color: rgba(201, 214, 219, 0.75);
 }
 
+/* On but unavailable: the ring survives so state is still readable, dimmed to
+ * match the text. */
 .modern-bar-popups.modern-bar-iso .quick-settings .quick-toggle:insensitive:checked {
-    background-color: rgba(220, 227, 230, 0.08);
-    box-shadow: inset 0 0 0 2px rgba(220, 227, 230, 0.24);
-    color: rgba(201, 214, 219, 0.45);
+    background-color: transparent;
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.28);
+    color: rgba(201, 214, 219, 0.4);
 }
 
 /* A has-menu pill is TWO actors in one rounded parent — ring the PARENT once
  * (per-half rings drew three stacked lines with the separator). */
 .modern-bar-popups.modern-bar-iso .quick-settings .quick-toggle-has-menu:checked {
-    box-shadow: inset 0 0 0 2px rgba(220, 227, 230, 0.45);
+    box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.85);
 }
 
 .modern-bar-popups.modern-bar-iso .quick-settings .quick-toggle-has-menu:checked .quick-toggle,
@@ -847,11 +932,13 @@
     box-shadow: none;
 }
 
+/* The divider between a has-menu pill's two halves. Dim at rest — with no tile
+ * edges to relate to it would otherwise be the only line on an off tile. */
 .modern-bar-popups.modern-bar-iso .quick-settings .quick-toggle-has-menu .quick-toggle-separator {
-    background-color: rgba(220, 227, 230, 0.22);
+    background-color: rgba(201, 214, 219, 0.16);
 }
 .modern-bar-popups.modern-bar-iso .quick-settings .quick-toggle-has-menu:checked .quick-toggle-separator {
-    background-color: rgba(220, 227, 230, 0.42);
+    background-color: rgba(255, 255, 255, 0.55);
 }
 
 /* Sliders — the fill is an St-specific property, the handle is plain color.
@@ -1193,9 +1280,24 @@
     background-color: rgba(255, 194, 51, 0.02);
 }
 
-/* Interactive tiles (rest / hover / active / insensitive). The calendar day
- * cells are painted the surface grey by stock, so they're neutralised in the
- * calendar rules further down. */
+/* Interactive tiles — FILAMENT treatment.
+ *
+ * Rest carries NO fill and NO edge: an off toggle is the void with a label on
+ * it. That is the whole idea — the previous pass washed every tile in
+ * rgba(deep, 0.07), so ten pill tiles meant ten tinted slabs and the grid never
+ * returned to the void. Design rule 8 says accent intensity scales inversely
+ * with area; a resting wash is the largest-area accent in the whole theme.
+ *
+ * Feedback arrives only on interaction, and state is drawn as an EDGE, never a
+ * slab (see the :checked block). This matches how the panel buttons already
+ * behave (design rule 3: no highlight box in any state, the text powers up).
+ *
+ * Edges are inset box-shadows, never borders. A border would add to the box
+ * and shift stock's centred content by its width — inset shadows draw inside
+ * the existing geometry, which is what keeps this recolor-only.
+ *
+ * The calendar day cells are painted the surface grey by stock, so they're
+ * neutralised in the calendar rules further down. */
 .modern-bar-popups.modern-bar-clu .quick-settings .quick-toggle,
 .modern-bar-popups.modern-bar-clu .quick-settings .icon-button,
 .modern-bar-popups.modern-bar-clu .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button,
@@ -1204,10 +1306,14 @@
 .modern-bar-popups.modern-bar-clu .message-list .message-close-button,
 .modern-bar-popups.modern-bar-clu .message-list .message-expand-button,
 .modern-bar-popups.modern-bar-clu .message-list .message-collapse-button {
-    background-color: rgba(255, 194, 51, 0.07);
-    color: #e0c184;
+    background-color: transparent;
+    box-shadow: none;
+    color: rgba(224, 193, 132, 0.82);
 }
 
+/* Hover is the only place a resting tile gains a fill, and it is deliberately
+ * faint — enough to confirm the pointer is on a control (the tiles have no
+ * resting edge to highlight), not enough to read as a slab. */
 .modern-bar-popups.modern-bar-clu .quick-settings .quick-toggle:hover,
 .modern-bar-popups.modern-bar-clu .quick-settings .icon-button:hover,
 .modern-bar-popups.modern-bar-clu .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:hover,
@@ -1216,7 +1322,7 @@
 .modern-bar-popups.modern-bar-clu .message-list .message-close-button:hover,
 .modern-bar-popups.modern-bar-clu .message-list .message-expand-button:hover,
 .modern-bar-popups.modern-bar-clu .message-list .message-collapse-button:hover {
-    background-color: rgba(255, 194, 51, 0.14);
+    background-color: rgba(255, 194, 51, 0.06);
     color: #ffc233;
 }
 
@@ -1228,7 +1334,7 @@
 .modern-bar-popups.modern-bar-clu .message-list .message-close-button:active,
 .modern-bar-popups.modern-bar-clu .message-list .message-expand-button:active,
 .modern-bar-popups.modern-bar-clu .message-list .message-collapse-button:active {
-    background-color: rgba(255, 194, 51, 0.2);
+    background-color: rgba(255, 194, 51, 0.11);
     color: #ffc233;
 }
 
@@ -1237,23 +1343,33 @@
 .modern-bar-popups.modern-bar-clu .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:insensitive,
 .modern-bar-popups.modern-bar-clu .message-list-controls .message-list-clear-button:insensitive,
 .modern-bar-popups.modern-bar-clu .datemenu-popover .events-button:insensitive {
-    background-color: rgba(255, 194, 51, 0.03);
-    color: rgba(224, 193, 132, 0.38);
+    background-color: transparent;
+    box-shadow: none;
+    color: rgba(224, 193, 132, 0.34);
 }
 
 /* The "on" state — every one of these derives from -st-accent-color in stock,
- * so ALL must be restated or the missed ones keep the system accent. LARGE
- * tiles get a quiet wash + a lit 2px edge; text stays the DEEP accent (the
- * pale variant is too close to rest to read as a state change). */
+ * so ALL must be restated or the missed ones keep the system accent.
+ *
+ * FILAMENT: no fill at all. State is a 2px lit ring on the pill edge plus deep
+ * text. Full-saturation accent is fine here precisely because a hairline is a
+ * tiny area (design rule 8) — the same colour across a 12em x 3.27em fill is
+ * the wall of neon that rule exists to prevent. The ring reads as a circuit
+ * carrying current, which is the thing being aimed at.
+ *
+ * Text stays the DEEP accent, not the pale variant: pale sits a few points off
+ * the resting colour and stops reading as a change at all. */
 .modern-bar-popups.modern-bar-clu .quick-settings .quick-toggle:checked,
 .modern-bar-popups.modern-bar-clu .quick-settings .quick-toggle:focus:checked,
 .modern-bar-popups.modern-bar-clu .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked,
 .modern-bar-popups.modern-bar-clu .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:focus {
-    background-color: rgba(255, 223, 128, 0.13);
-    box-shadow: inset 0 0 0 2px rgba(255, 223, 128, 0.45);
+    background-color: transparent;
+    box-shadow: inset 0 0 0 2px rgba(255, 194, 51, 0.85);
     color: #ffc233;
 }
 
+/* Hovering an already-on tile: the ring goes full strength and the faintest
+ * wash appears, so on+hover is still distinguishable from on. */
 .modern-bar-popups.modern-bar-clu .quick-settings .quick-toggle:hover:checked,
 .modern-bar-popups.modern-bar-clu .quick-settings .quick-toggle:focus:hover:checked,
 .modern-bar-popups.modern-bar-clu .quick-settings .quick-toggle:active:checked,
@@ -1264,8 +1380,8 @@
 .modern-bar-popups.modern-bar-clu .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:active,
 .modern-bar-popups.modern-bar-clu .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:active:hover,
 .modern-bar-popups.modern-bar-clu .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:active:focus {
-    background-color: rgba(255, 223, 128, 0.2);
-    box-shadow: inset 0 0 0 2px rgba(255, 223, 128, 0.62);
+    background-color: rgba(255, 194, 51, 0.08);
+    box-shadow: inset 0 0 0 2px #ffc233;
     color: #ffc233;
 }
 
@@ -1288,16 +1404,18 @@
     color: rgba(224, 193, 132, 0.75);
 }
 
+/* On but unavailable: the ring survives so state is still readable, dimmed to
+ * match the text. */
 .modern-bar-popups.modern-bar-clu .quick-settings .quick-toggle:insensitive:checked {
-    background-color: rgba(255, 223, 128, 0.08);
-    box-shadow: inset 0 0 0 2px rgba(255, 223, 128, 0.24);
-    color: rgba(224, 193, 132, 0.45);
+    background-color: transparent;
+    box-shadow: inset 0 0 0 2px rgba(255, 194, 51, 0.28);
+    color: rgba(224, 193, 132, 0.4);
 }
 
 /* A has-menu pill is TWO actors in one rounded parent — ring the PARENT once
  * (per-half rings drew three stacked lines with the separator). */
 .modern-bar-popups.modern-bar-clu .quick-settings .quick-toggle-has-menu:checked {
-    box-shadow: inset 0 0 0 2px rgba(255, 223, 128, 0.45);
+    box-shadow: inset 0 0 0 2px rgba(255, 194, 51, 0.85);
 }
 
 .modern-bar-popups.modern-bar-clu .quick-settings .quick-toggle-has-menu:checked .quick-toggle,
@@ -1305,11 +1423,13 @@
     box-shadow: none;
 }
 
+/* The divider between a has-menu pill's two halves. Dim at rest — with no tile
+ * edges to relate to it would otherwise be the only line on an off tile. */
 .modern-bar-popups.modern-bar-clu .quick-settings .quick-toggle-has-menu .quick-toggle-separator {
-    background-color: rgba(255, 223, 128, 0.22);
+    background-color: rgba(224, 193, 132, 0.16);
 }
 .modern-bar-popups.modern-bar-clu .quick-settings .quick-toggle-has-menu:checked .quick-toggle-separator {
-    background-color: rgba(255, 223, 128, 0.42);
+    background-color: rgba(255, 194, 51, 0.55);
 }
 
 /* Sliders — the fill is an St-specific property, the handle is plain color.
@@ -1651,9 +1771,24 @@
     background-color: rgba(255, 154, 67, 0.02);
 }
 
-/* Interactive tiles (rest / hover / active / insensitive). The calendar day
- * cells are painted the surface grey by stock, so they're neutralised in the
- * calendar rules further down. */
+/* Interactive tiles — FILAMENT treatment.
+ *
+ * Rest carries NO fill and NO edge: an off toggle is the void with a label on
+ * it. That is the whole idea — the previous pass washed every tile in
+ * rgba(deep, 0.07), so ten pill tiles meant ten tinted slabs and the grid never
+ * returned to the void. Design rule 8 says accent intensity scales inversely
+ * with area; a resting wash is the largest-area accent in the whole theme.
+ *
+ * Feedback arrives only on interaction, and state is drawn as an EDGE, never a
+ * slab (see the :checked block). This matches how the panel buttons already
+ * behave (design rule 3: no highlight box in any state, the text powers up).
+ *
+ * Edges are inset box-shadows, never borders. A border would add to the box
+ * and shift stock's centred content by its width — inset shadows draw inside
+ * the existing geometry, which is what keeps this recolor-only.
+ *
+ * The calendar day cells are painted the surface grey by stock, so they're
+ * neutralised in the calendar rules further down. */
 .modern-bar-popups.modern-bar-rinzler .quick-settings .quick-toggle,
 .modern-bar-popups.modern-bar-rinzler .quick-settings .icon-button,
 .modern-bar-popups.modern-bar-rinzler .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button,
@@ -1662,10 +1797,14 @@
 .modern-bar-popups.modern-bar-rinzler .message-list .message-close-button,
 .modern-bar-popups.modern-bar-rinzler .message-list .message-expand-button,
 .modern-bar-popups.modern-bar-rinzler .message-list .message-collapse-button {
-    background-color: rgba(255, 154, 67, 0.07);
-    color: #e5a983;
+    background-color: transparent;
+    box-shadow: none;
+    color: rgba(229, 169, 131, 0.82);
 }
 
+/* Hover is the only place a resting tile gains a fill, and it is deliberately
+ * faint — enough to confirm the pointer is on a control (the tiles have no
+ * resting edge to highlight), not enough to read as a slab. */
 .modern-bar-popups.modern-bar-rinzler .quick-settings .quick-toggle:hover,
 .modern-bar-popups.modern-bar-rinzler .quick-settings .icon-button:hover,
 .modern-bar-popups.modern-bar-rinzler .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:hover,
@@ -1674,7 +1813,7 @@
 .modern-bar-popups.modern-bar-rinzler .message-list .message-close-button:hover,
 .modern-bar-popups.modern-bar-rinzler .message-list .message-expand-button:hover,
 .modern-bar-popups.modern-bar-rinzler .message-list .message-collapse-button:hover {
-    background-color: rgba(255, 154, 67, 0.14);
+    background-color: rgba(255, 154, 67, 0.06);
     color: #ff9a43;
 }
 
@@ -1686,7 +1825,7 @@
 .modern-bar-popups.modern-bar-rinzler .message-list .message-close-button:active,
 .modern-bar-popups.modern-bar-rinzler .message-list .message-expand-button:active,
 .modern-bar-popups.modern-bar-rinzler .message-list .message-collapse-button:active {
-    background-color: rgba(255, 154, 67, 0.2);
+    background-color: rgba(255, 154, 67, 0.11);
     color: #ff9a43;
 }
 
@@ -1695,23 +1834,33 @@
 .modern-bar-popups.modern-bar-rinzler .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:insensitive,
 .modern-bar-popups.modern-bar-rinzler .message-list-controls .message-list-clear-button:insensitive,
 .modern-bar-popups.modern-bar-rinzler .datemenu-popover .events-button:insensitive {
-    background-color: rgba(255, 154, 67, 0.03);
-    color: rgba(229, 169, 131, 0.38);
+    background-color: transparent;
+    box-shadow: none;
+    color: rgba(229, 169, 131, 0.34);
 }
 
 /* The "on" state — every one of these derives from -st-accent-color in stock,
- * so ALL must be restated or the missed ones keep the system accent. LARGE
- * tiles get a quiet wash + a lit 2px edge; text stays the DEEP accent (the
- * pale variant is too close to rest to read as a state change). */
+ * so ALL must be restated or the missed ones keep the system accent.
+ *
+ * FILAMENT: no fill at all. State is a 2px lit ring on the pill edge plus deep
+ * text. Full-saturation accent is fine here precisely because a hairline is a
+ * tiny area (design rule 8) — the same colour across a 12em x 3.27em fill is
+ * the wall of neon that rule exists to prevent. The ring reads as a circuit
+ * carrying current, which is the thing being aimed at.
+ *
+ * Text stays the DEEP accent, not the pale variant: pale sits a few points off
+ * the resting colour and stops reading as a change at all. */
 .modern-bar-popups.modern-bar-rinzler .quick-settings .quick-toggle:checked,
 .modern-bar-popups.modern-bar-rinzler .quick-settings .quick-toggle:focus:checked,
 .modern-bar-popups.modern-bar-rinzler .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked,
 .modern-bar-popups.modern-bar-rinzler .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:focus {
-    background-color: rgba(255, 190, 149, 0.13);
-    box-shadow: inset 0 0 0 2px rgba(255, 190, 149, 0.45);
+    background-color: transparent;
+    box-shadow: inset 0 0 0 2px rgba(255, 154, 67, 0.85);
     color: #ff9a43;
 }
 
+/* Hovering an already-on tile: the ring goes full strength and the faintest
+ * wash appears, so on+hover is still distinguishable from on. */
 .modern-bar-popups.modern-bar-rinzler .quick-settings .quick-toggle:hover:checked,
 .modern-bar-popups.modern-bar-rinzler .quick-settings .quick-toggle:focus:hover:checked,
 .modern-bar-popups.modern-bar-rinzler .quick-settings .quick-toggle:active:checked,
@@ -1722,8 +1871,8 @@
 .modern-bar-popups.modern-bar-rinzler .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:active,
 .modern-bar-popups.modern-bar-rinzler .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:active:hover,
 .modern-bar-popups.modern-bar-rinzler .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:active:focus {
-    background-color: rgba(255, 190, 149, 0.2);
-    box-shadow: inset 0 0 0 2px rgba(255, 190, 149, 0.62);
+    background-color: rgba(255, 154, 67, 0.08);
+    box-shadow: inset 0 0 0 2px #ff9a43;
     color: #ff9a43;
 }
 
@@ -1746,16 +1895,18 @@
     color: rgba(229, 169, 131, 0.75);
 }
 
+/* On but unavailable: the ring survives so state is still readable, dimmed to
+ * match the text. */
 .modern-bar-popups.modern-bar-rinzler .quick-settings .quick-toggle:insensitive:checked {
-    background-color: rgba(255, 190, 149, 0.08);
-    box-shadow: inset 0 0 0 2px rgba(255, 190, 149, 0.24);
-    color: rgba(229, 169, 131, 0.45);
+    background-color: transparent;
+    box-shadow: inset 0 0 0 2px rgba(255, 154, 67, 0.28);
+    color: rgba(229, 169, 131, 0.4);
 }
 
 /* A has-menu pill is TWO actors in one rounded parent — ring the PARENT once
  * (per-half rings drew three stacked lines with the separator). */
 .modern-bar-popups.modern-bar-rinzler .quick-settings .quick-toggle-has-menu:checked {
-    box-shadow: inset 0 0 0 2px rgba(255, 190, 149, 0.45);
+    box-shadow: inset 0 0 0 2px rgba(255, 154, 67, 0.85);
 }
 
 .modern-bar-popups.modern-bar-rinzler .quick-settings .quick-toggle-has-menu:checked .quick-toggle,
@@ -1763,11 +1914,13 @@
     box-shadow: none;
 }
 
+/* The divider between a has-menu pill's two halves. Dim at rest — with no tile
+ * edges to relate to it would otherwise be the only line on an off tile. */
 .modern-bar-popups.modern-bar-rinzler .quick-settings .quick-toggle-has-menu .quick-toggle-separator {
-    background-color: rgba(255, 190, 149, 0.22);
+    background-color: rgba(229, 169, 131, 0.16);
 }
 .modern-bar-popups.modern-bar-rinzler .quick-settings .quick-toggle-has-menu:checked .quick-toggle-separator {
-    background-color: rgba(255, 190, 149, 0.42);
+    background-color: rgba(255, 154, 67, 0.55);
 }
 
 /* Sliders — the fill is an St-specific property, the handle is plain color.
@@ -2109,9 +2262,24 @@
     background-color: rgba(255, 112, 95, 0.02);
 }
 
-/* Interactive tiles (rest / hover / active / insensitive). The calendar day
- * cells are painted the surface grey by stock, so they're neutralised in the
- * calendar rules further down. */
+/* Interactive tiles — FILAMENT treatment.
+ *
+ * Rest carries NO fill and NO edge: an off toggle is the void with a label on
+ * it. That is the whole idea — the previous pass washed every tile in
+ * rgba(deep, 0.07), so ten pill tiles meant ten tinted slabs and the grid never
+ * returned to the void. Design rule 8 says accent intensity scales inversely
+ * with area; a resting wash is the largest-area accent in the whole theme.
+ *
+ * Feedback arrives only on interaction, and state is drawn as an EDGE, never a
+ * slab (see the :checked block). This matches how the panel buttons already
+ * behave (design rule 3: no highlight box in any state, the text powers up).
+ *
+ * Edges are inset box-shadows, never borders. A border would add to the box
+ * and shift stock's centred content by its width — inset shadows draw inside
+ * the existing geometry, which is what keeps this recolor-only.
+ *
+ * The calendar day cells are painted the surface grey by stock, so they're
+ * neutralised in the calendar rules further down. */
 .modern-bar-popups.modern-bar-sark .quick-settings .quick-toggle,
 .modern-bar-popups.modern-bar-sark .quick-settings .icon-button,
 .modern-bar-popups.modern-bar-sark .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button,
@@ -2120,10 +2288,14 @@
 .modern-bar-popups.modern-bar-sark .message-list .message-close-button,
 .modern-bar-popups.modern-bar-sark .message-list .message-expand-button,
 .modern-bar-popups.modern-bar-sark .message-list .message-collapse-button {
-    background-color: rgba(255, 112, 95, 0.07);
-    color: #eaa0a0;
+    background-color: transparent;
+    box-shadow: none;
+    color: rgba(234, 160, 160, 0.82);
 }
 
+/* Hover is the only place a resting tile gains a fill, and it is deliberately
+ * faint — enough to confirm the pointer is on a control (the tiles have no
+ * resting edge to highlight), not enough to read as a slab. */
 .modern-bar-popups.modern-bar-sark .quick-settings .quick-toggle:hover,
 .modern-bar-popups.modern-bar-sark .quick-settings .icon-button:hover,
 .modern-bar-popups.modern-bar-sark .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:hover,
@@ -2132,7 +2304,7 @@
 .modern-bar-popups.modern-bar-sark .message-list .message-close-button:hover,
 .modern-bar-popups.modern-bar-sark .message-list .message-expand-button:hover,
 .modern-bar-popups.modern-bar-sark .message-list .message-collapse-button:hover {
-    background-color: rgba(255, 112, 95, 0.14);
+    background-color: rgba(255, 112, 95, 0.06);
     color: #ff705f;
 }
 
@@ -2144,7 +2316,7 @@
 .modern-bar-popups.modern-bar-sark .message-list .message-close-button:active,
 .modern-bar-popups.modern-bar-sark .message-list .message-expand-button:active,
 .modern-bar-popups.modern-bar-sark .message-list .message-collapse-button:active {
-    background-color: rgba(255, 112, 95, 0.2);
+    background-color: rgba(255, 112, 95, 0.11);
     color: #ff705f;
 }
 
@@ -2153,23 +2325,33 @@
 .modern-bar-popups.modern-bar-sark .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:insensitive,
 .modern-bar-popups.modern-bar-sark .message-list-controls .message-list-clear-button:insensitive,
 .modern-bar-popups.modern-bar-sark .datemenu-popover .events-button:insensitive {
-    background-color: rgba(255, 112, 95, 0.03);
-    color: rgba(234, 160, 160, 0.38);
+    background-color: transparent;
+    box-shadow: none;
+    color: rgba(234, 160, 160, 0.34);
 }
 
 /* The "on" state — every one of these derives from -st-accent-color in stock,
- * so ALL must be restated or the missed ones keep the system accent. LARGE
- * tiles get a quiet wash + a lit 2px edge; text stays the DEEP accent (the
- * pale variant is too close to rest to read as a state change). */
+ * so ALL must be restated or the missed ones keep the system accent.
+ *
+ * FILAMENT: no fill at all. State is a 2px lit ring on the pill edge plus deep
+ * text. Full-saturation accent is fine here precisely because a hairline is a
+ * tiny area (design rule 8) — the same colour across a 12em x 3.27em fill is
+ * the wall of neon that rule exists to prevent. The ring reads as a circuit
+ * carrying current, which is the thing being aimed at.
+ *
+ * Text stays the DEEP accent, not the pale variant: pale sits a few points off
+ * the resting colour and stops reading as a change at all. */
 .modern-bar-popups.modern-bar-sark .quick-settings .quick-toggle:checked,
 .modern-bar-popups.modern-bar-sark .quick-settings .quick-toggle:focus:checked,
 .modern-bar-popups.modern-bar-sark .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked,
 .modern-bar-popups.modern-bar-sark .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:focus {
-    background-color: rgba(255, 184, 175, 0.13);
-    box-shadow: inset 0 0 0 2px rgba(255, 184, 175, 0.45);
+    background-color: transparent;
+    box-shadow: inset 0 0 0 2px rgba(255, 112, 95, 0.85);
     color: #ff705f;
 }
 
+/* Hovering an already-on tile: the ring goes full strength and the faintest
+ * wash appears, so on+hover is still distinguishable from on. */
 .modern-bar-popups.modern-bar-sark .quick-settings .quick-toggle:hover:checked,
 .modern-bar-popups.modern-bar-sark .quick-settings .quick-toggle:focus:hover:checked,
 .modern-bar-popups.modern-bar-sark .quick-settings .quick-toggle:active:checked,
@@ -2180,8 +2362,8 @@
 .modern-bar-popups.modern-bar-sark .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:active,
 .modern-bar-popups.modern-bar-sark .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:active:hover,
 .modern-bar-popups.modern-bar-sark .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:active:focus {
-    background-color: rgba(255, 184, 175, 0.2);
-    box-shadow: inset 0 0 0 2px rgba(255, 184, 175, 0.62);
+    background-color: rgba(255, 112, 95, 0.08);
+    box-shadow: inset 0 0 0 2px #ff705f;
     color: #ff705f;
 }
 
@@ -2204,16 +2386,18 @@
     color: rgba(234, 160, 160, 0.75);
 }
 
+/* On but unavailable: the ring survives so state is still readable, dimmed to
+ * match the text. */
 .modern-bar-popups.modern-bar-sark .quick-settings .quick-toggle:insensitive:checked {
-    background-color: rgba(255, 184, 175, 0.08);
-    box-shadow: inset 0 0 0 2px rgba(255, 184, 175, 0.24);
-    color: rgba(234, 160, 160, 0.45);
+    background-color: transparent;
+    box-shadow: inset 0 0 0 2px rgba(255, 112, 95, 0.28);
+    color: rgba(234, 160, 160, 0.4);
 }
 
 /* A has-menu pill is TWO actors in one rounded parent — ring the PARENT once
  * (per-half rings drew three stacked lines with the separator). */
 .modern-bar-popups.modern-bar-sark .quick-settings .quick-toggle-has-menu:checked {
-    box-shadow: inset 0 0 0 2px rgba(255, 184, 175, 0.45);
+    box-shadow: inset 0 0 0 2px rgba(255, 112, 95, 0.85);
 }
 
 .modern-bar-popups.modern-bar-sark .quick-settings .quick-toggle-has-menu:checked .quick-toggle,
@@ -2221,11 +2405,13 @@
     box-shadow: none;
 }
 
+/* The divider between a has-menu pill's two halves. Dim at rest — with no tile
+ * edges to relate to it would otherwise be the only line on an off tile. */
 .modern-bar-popups.modern-bar-sark .quick-settings .quick-toggle-has-menu .quick-toggle-separator {
-    background-color: rgba(255, 184, 175, 0.22);
+    background-color: rgba(234, 160, 160, 0.16);
 }
 .modern-bar-popups.modern-bar-sark .quick-settings .quick-toggle-has-menu:checked .quick-toggle-separator {
-    background-color: rgba(255, 184, 175, 0.42);
+    background-color: rgba(255, 112, 95, 0.55);
 }
 
 /* Sliders — the fill is an St-specific property, the handle is plain color.
@@ -2567,9 +2753,24 @@
     background-color: rgba(63, 245, 176, 0.02);
 }
 
-/* Interactive tiles (rest / hover / active / insensitive). The calendar day
- * cells are painted the surface grey by stock, so they're neutralised in the
- * calendar rules further down. */
+/* Interactive tiles — FILAMENT treatment.
+ *
+ * Rest carries NO fill and NO edge: an off toggle is the void with a label on
+ * it. That is the whole idea — the previous pass washed every tile in
+ * rgba(deep, 0.07), so ten pill tiles meant ten tinted slabs and the grid never
+ * returned to the void. Design rule 8 says accent intensity scales inversely
+ * with area; a resting wash is the largest-area accent in the whole theme.
+ *
+ * Feedback arrives only on interaction, and state is drawn as an EDGE, never a
+ * slab (see the :checked block). This matches how the panel buttons already
+ * behave (design rule 3: no highlight box in any state, the text powers up).
+ *
+ * Edges are inset box-shadows, never borders. A border would add to the box
+ * and shift stock's centred content by its width — inset shadows draw inside
+ * the existing geometry, which is what keeps this recolor-only.
+ *
+ * The calendar day cells are painted the surface grey by stock, so they're
+ * neutralised in the calendar rules further down. */
 .modern-bar-popups.modern-bar-military .quick-settings .quick-toggle,
 .modern-bar-popups.modern-bar-military .quick-settings .icon-button,
 .modern-bar-popups.modern-bar-military .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button,
@@ -2578,10 +2779,14 @@
 .modern-bar-popups.modern-bar-military .message-list .message-close-button,
 .modern-bar-popups.modern-bar-military .message-list .message-expand-button,
 .modern-bar-popups.modern-bar-military .message-list .message-collapse-button {
-    background-color: rgba(63, 245, 176, 0.07);
-    color: #9fe0c0;
+    background-color: transparent;
+    box-shadow: none;
+    color: rgba(159, 224, 192, 0.82);
 }
 
+/* Hover is the only place a resting tile gains a fill, and it is deliberately
+ * faint — enough to confirm the pointer is on a control (the tiles have no
+ * resting edge to highlight), not enough to read as a slab. */
 .modern-bar-popups.modern-bar-military .quick-settings .quick-toggle:hover,
 .modern-bar-popups.modern-bar-military .quick-settings .icon-button:hover,
 .modern-bar-popups.modern-bar-military .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:hover,
@@ -2590,7 +2795,7 @@
 .modern-bar-popups.modern-bar-military .message-list .message-close-button:hover,
 .modern-bar-popups.modern-bar-military .message-list .message-expand-button:hover,
 .modern-bar-popups.modern-bar-military .message-list .message-collapse-button:hover {
-    background-color: rgba(63, 245, 176, 0.14);
+    background-color: rgba(63, 245, 176, 0.06);
     color: #3ff5b0;
 }
 
@@ -2602,7 +2807,7 @@
 .modern-bar-popups.modern-bar-military .message-list .message-close-button:active,
 .modern-bar-popups.modern-bar-military .message-list .message-expand-button:active,
 .modern-bar-popups.modern-bar-military .message-list .message-collapse-button:active {
-    background-color: rgba(63, 245, 176, 0.2);
+    background-color: rgba(63, 245, 176, 0.11);
     color: #3ff5b0;
 }
 
@@ -2611,23 +2816,33 @@
 .modern-bar-popups.modern-bar-military .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:insensitive,
 .modern-bar-popups.modern-bar-military .message-list-controls .message-list-clear-button:insensitive,
 .modern-bar-popups.modern-bar-military .datemenu-popover .events-button:insensitive {
-    background-color: rgba(63, 245, 176, 0.03);
-    color: rgba(159, 224, 192, 0.38);
+    background-color: transparent;
+    box-shadow: none;
+    color: rgba(159, 224, 192, 0.34);
 }
 
 /* The "on" state — every one of these derives from -st-accent-color in stock,
- * so ALL must be restated or the missed ones keep the system accent. LARGE
- * tiles get a quiet wash + a lit 2px edge; text stays the DEEP accent (the
- * pale variant is too close to rest to read as a state change). */
+ * so ALL must be restated or the missed ones keep the system accent.
+ *
+ * FILAMENT: no fill at all. State is a 2px lit ring on the pill edge plus deep
+ * text. Full-saturation accent is fine here precisely because a hairline is a
+ * tiny area (design rule 8) — the same colour across a 12em x 3.27em fill is
+ * the wall of neon that rule exists to prevent. The ring reads as a circuit
+ * carrying current, which is the thing being aimed at.
+ *
+ * Text stays the DEEP accent, not the pale variant: pale sits a few points off
+ * the resting colour and stops reading as a change at all. */
 .modern-bar-popups.modern-bar-military .quick-settings .quick-toggle:checked,
 .modern-bar-popups.modern-bar-military .quick-settings .quick-toggle:focus:checked,
 .modern-bar-popups.modern-bar-military .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked,
 .modern-bar-popups.modern-bar-military .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:focus {
-    background-color: rgba(141, 250, 210, 0.13);
-    box-shadow: inset 0 0 0 2px rgba(141, 250, 210, 0.45);
+    background-color: transparent;
+    box-shadow: inset 0 0 0 2px rgba(63, 245, 176, 0.85);
     color: #3ff5b0;
 }
 
+/* Hovering an already-on tile: the ring goes full strength and the faintest
+ * wash appears, so on+hover is still distinguishable from on. */
 .modern-bar-popups.modern-bar-military .quick-settings .quick-toggle:hover:checked,
 .modern-bar-popups.modern-bar-military .quick-settings .quick-toggle:focus:hover:checked,
 .modern-bar-popups.modern-bar-military .quick-settings .quick-toggle:active:checked,
@@ -2638,8 +2853,8 @@
 .modern-bar-popups.modern-bar-military .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:active,
 .modern-bar-popups.modern-bar-military .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:active:hover,
 .modern-bar-popups.modern-bar-military .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:active:focus {
-    background-color: rgba(141, 250, 210, 0.2);
-    box-shadow: inset 0 0 0 2px rgba(141, 250, 210, 0.62);
+    background-color: rgba(63, 245, 176, 0.08);
+    box-shadow: inset 0 0 0 2px #3ff5b0;
     color: #3ff5b0;
 }
 
@@ -2662,16 +2877,18 @@
     color: rgba(159, 224, 192, 0.75);
 }
 
+/* On but unavailable: the ring survives so state is still readable, dimmed to
+ * match the text. */
 .modern-bar-popups.modern-bar-military .quick-settings .quick-toggle:insensitive:checked {
-    background-color: rgba(141, 250, 210, 0.08);
-    box-shadow: inset 0 0 0 2px rgba(141, 250, 210, 0.24);
-    color: rgba(159, 224, 192, 0.45);
+    background-color: transparent;
+    box-shadow: inset 0 0 0 2px rgba(63, 245, 176, 0.28);
+    color: rgba(159, 224, 192, 0.4);
 }
 
 /* A has-menu pill is TWO actors in one rounded parent — ring the PARENT once
  * (per-half rings drew three stacked lines with the separator). */
 .modern-bar-popups.modern-bar-military .quick-settings .quick-toggle-has-menu:checked {
-    box-shadow: inset 0 0 0 2px rgba(141, 250, 210, 0.45);
+    box-shadow: inset 0 0 0 2px rgba(63, 245, 176, 0.85);
 }
 
 .modern-bar-popups.modern-bar-military .quick-settings .quick-toggle-has-menu:checked .quick-toggle,
@@ -2679,11 +2896,13 @@
     box-shadow: none;
 }
 
+/* The divider between a has-menu pill's two halves. Dim at rest — with no tile
+ * edges to relate to it would otherwise be the only line on an off tile. */
 .modern-bar-popups.modern-bar-military .quick-settings .quick-toggle-has-menu .quick-toggle-separator {
-    background-color: rgba(141, 250, 210, 0.22);
+    background-color: rgba(159, 224, 192, 0.16);
 }
 .modern-bar-popups.modern-bar-military .quick-settings .quick-toggle-has-menu:checked .quick-toggle-separator {
-    background-color: rgba(141, 250, 210, 0.42);
+    background-color: rgba(63, 245, 176, 0.55);
 }
 
 /* Sliders — the fill is an St-specific property, the handle is plain color.
@@ -3025,9 +3244,24 @@
     background-color: rgba(172, 142, 253, 0.02);
 }
 
-/* Interactive tiles (rest / hover / active / insensitive). The calendar day
- * cells are painted the surface grey by stock, so they're neutralised in the
- * calendar rules further down. */
+/* Interactive tiles — FILAMENT treatment.
+ *
+ * Rest carries NO fill and NO edge: an off toggle is the void with a label on
+ * it. That is the whole idea — the previous pass washed every tile in
+ * rgba(deep, 0.07), so ten pill tiles meant ten tinted slabs and the grid never
+ * returned to the void. Design rule 8 says accent intensity scales inversely
+ * with area; a resting wash is the largest-area accent in the whole theme.
+ *
+ * Feedback arrives only on interaction, and state is drawn as an EDGE, never a
+ * slab (see the :checked block). This matches how the panel buttons already
+ * behave (design rule 3: no highlight box in any state, the text powers up).
+ *
+ * Edges are inset box-shadows, never borders. A border would add to the box
+ * and shift stock's centred content by its width — inset shadows draw inside
+ * the existing geometry, which is what keeps this recolor-only.
+ *
+ * The calendar day cells are painted the surface grey by stock, so they're
+ * neutralised in the calendar rules further down. */
 .modern-bar-popups.modern-bar-utility .quick-settings .quick-toggle,
 .modern-bar-popups.modern-bar-utility .quick-settings .icon-button,
 .modern-bar-popups.modern-bar-utility .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button,
@@ -3036,10 +3270,14 @@
 .modern-bar-popups.modern-bar-utility .message-list .message-close-button,
 .modern-bar-popups.modern-bar-utility .message-list .message-expand-button,
 .modern-bar-popups.modern-bar-utility .message-list .message-collapse-button {
-    background-color: rgba(172, 142, 253, 0.07);
-    color: #c0aee8;
+    background-color: transparent;
+    box-shadow: none;
+    color: rgba(192, 174, 232, 0.82);
 }
 
+/* Hover is the only place a resting tile gains a fill, and it is deliberately
+ * faint — enough to confirm the pointer is on a control (the tiles have no
+ * resting edge to highlight), not enough to read as a slab. */
 .modern-bar-popups.modern-bar-utility .quick-settings .quick-toggle:hover,
 .modern-bar-popups.modern-bar-utility .quick-settings .icon-button:hover,
 .modern-bar-popups.modern-bar-utility .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:hover,
@@ -3048,7 +3286,7 @@
 .modern-bar-popups.modern-bar-utility .message-list .message-close-button:hover,
 .modern-bar-popups.modern-bar-utility .message-list .message-expand-button:hover,
 .modern-bar-popups.modern-bar-utility .message-list .message-collapse-button:hover {
-    background-color: rgba(172, 142, 253, 0.14);
+    background-color: rgba(172, 142, 253, 0.06);
     color: #ac8efd;
 }
 
@@ -3060,7 +3298,7 @@
 .modern-bar-popups.modern-bar-utility .message-list .message-close-button:active,
 .modern-bar-popups.modern-bar-utility .message-list .message-expand-button:active,
 .modern-bar-popups.modern-bar-utility .message-list .message-collapse-button:active {
-    background-color: rgba(172, 142, 253, 0.2);
+    background-color: rgba(172, 142, 253, 0.11);
     color: #ac8efd;
 }
 
@@ -3069,23 +3307,33 @@
 .modern-bar-popups.modern-bar-utility .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:insensitive,
 .modern-bar-popups.modern-bar-utility .message-list-controls .message-list-clear-button:insensitive,
 .modern-bar-popups.modern-bar-utility .datemenu-popover .events-button:insensitive {
-    background-color: rgba(172, 142, 253, 0.03);
-    color: rgba(192, 174, 232, 0.38);
+    background-color: transparent;
+    box-shadow: none;
+    color: rgba(192, 174, 232, 0.34);
 }
 
 /* The "on" state — every one of these derives from -st-accent-color in stock,
- * so ALL must be restated or the missed ones keep the system accent. LARGE
- * tiles get a quiet wash + a lit 2px edge; text stays the DEEP accent (the
- * pale variant is too close to rest to read as a state change). */
+ * so ALL must be restated or the missed ones keep the system accent.
+ *
+ * FILAMENT: no fill at all. State is a 2px lit ring on the pill edge plus deep
+ * text. Full-saturation accent is fine here precisely because a hairline is a
+ * tiny area (design rule 8) — the same colour across a 12em x 3.27em fill is
+ * the wall of neon that rule exists to prevent. The ring reads as a circuit
+ * carrying current, which is the thing being aimed at.
+ *
+ * Text stays the DEEP accent, not the pale variant: pale sits a few points off
+ * the resting colour and stops reading as a change at all. */
 .modern-bar-popups.modern-bar-utility .quick-settings .quick-toggle:checked,
 .modern-bar-popups.modern-bar-utility .quick-settings .quick-toggle:focus:checked,
 .modern-bar-popups.modern-bar-utility .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked,
 .modern-bar-popups.modern-bar-utility .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:focus {
-    background-color: rgba(210, 193, 255, 0.13);
-    box-shadow: inset 0 0 0 2px rgba(210, 193, 255, 0.45);
+    background-color: transparent;
+    box-shadow: inset 0 0 0 2px rgba(172, 142, 253, 0.85);
     color: #ac8efd;
 }
 
+/* Hovering an already-on tile: the ring goes full strength and the faintest
+ * wash appears, so on+hover is still distinguishable from on. */
 .modern-bar-popups.modern-bar-utility .quick-settings .quick-toggle:hover:checked,
 .modern-bar-popups.modern-bar-utility .quick-settings .quick-toggle:focus:hover:checked,
 .modern-bar-popups.modern-bar-utility .quick-settings .quick-toggle:active:checked,
@@ -3096,8 +3344,8 @@
 .modern-bar-popups.modern-bar-utility .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:active,
 .modern-bar-popups.modern-bar-utility .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:active:hover,
 .modern-bar-popups.modern-bar-utility .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:active:focus {
-    background-color: rgba(210, 193, 255, 0.2);
-    box-shadow: inset 0 0 0 2px rgba(210, 193, 255, 0.62);
+    background-color: rgba(172, 142, 253, 0.08);
+    box-shadow: inset 0 0 0 2px #ac8efd;
     color: #ac8efd;
 }
 
@@ -3120,16 +3368,18 @@
     color: rgba(192, 174, 232, 0.75);
 }
 
+/* On but unavailable: the ring survives so state is still readable, dimmed to
+ * match the text. */
 .modern-bar-popups.modern-bar-utility .quick-settings .quick-toggle:insensitive:checked {
-    background-color: rgba(210, 193, 255, 0.08);
-    box-shadow: inset 0 0 0 2px rgba(210, 193, 255, 0.24);
-    color: rgba(192, 174, 232, 0.45);
+    background-color: transparent;
+    box-shadow: inset 0 0 0 2px rgba(172, 142, 253, 0.28);
+    color: rgba(192, 174, 232, 0.4);
 }
 
 /* A has-menu pill is TWO actors in one rounded parent — ring the PARENT once
  * (per-half rings drew three stacked lines with the separator). */
 .modern-bar-popups.modern-bar-utility .quick-settings .quick-toggle-has-menu:checked {
-    box-shadow: inset 0 0 0 2px rgba(210, 193, 255, 0.45);
+    box-shadow: inset 0 0 0 2px rgba(172, 142, 253, 0.85);
 }
 
 .modern-bar-popups.modern-bar-utility .quick-settings .quick-toggle-has-menu:checked .quick-toggle,
@@ -3137,11 +3387,13 @@
     box-shadow: none;
 }
 
+/* The divider between a has-menu pill's two halves. Dim at rest — with no tile
+ * edges to relate to it would otherwise be the only line on an off tile. */
 .modern-bar-popups.modern-bar-utility .quick-settings .quick-toggle-has-menu .quick-toggle-separator {
-    background-color: rgba(210, 193, 255, 0.22);
+    background-color: rgba(192, 174, 232, 0.16);
 }
 .modern-bar-popups.modern-bar-utility .quick-settings .quick-toggle-has-menu:checked .quick-toggle-separator {
-    background-color: rgba(210, 193, 255, 0.42);
+    background-color: rgba(172, 142, 253, 0.55);
 }
 
 /* Sliders — the fill is an St-specific property, the handle is plain color.

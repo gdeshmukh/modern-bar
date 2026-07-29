@@ -302,6 +302,27 @@ function sharedBlock() {
     min-width: 180px;
 }
 
+/* ── Typeface for the GNOME dropdowns ───────────────────────────────────────
+ * The panel and our own metric popups have always been JetBrains Mono; Quick
+ * Settings and the calendar were left in the system face, which is why they
+ * read as a different product bolted underneath the bar.
+ *
+ * This is the ONE place the recolor-only rule is deliberately widened, and only
+ * to font-family. No font-size, no weight, no geometry: size is what stock uses
+ * to compute tile and cell metrics, so changing it is how you get clipping
+ * after a shell upgrade. Family alone still shifts text WIDTH, which is the
+ * live risk here — JetBrains Mono is wider than Cantarell, so a long
+ * title/subtitle pair ("Power Mode" / "Balanced") is the thing to check first
+ * if a label starts ellipsising.
+ *
+ * Scoped to the three dropdown roots, never a bare .popup-menu-content: that
+ * base is shared with the login screen, Looking Glass and modal dialogs. */
+.modern-bar-popups .quick-settings,
+.modern-bar-popups .quick-toggle-menu,
+.modern-bar-popups .datemenu-popover {
+    font-family: "JetBrains Mono", monospace;
+}
+
 .modern-bar-popups .modern-bar-popup .modern-bar-popup-header {
     font-size: 8.5pt;
     font-weight: bold;
@@ -471,9 +492,24 @@ ${R} .message-list .message:lower-in-stack {
     background-color: ${rgba(p.deep, 0.02)};
 }
 
-/* Interactive tiles (rest / hover / active / insensitive). The calendar day
- * cells are painted the surface grey by stock, so they're neutralised in the
- * calendar rules further down. */
+/* Interactive tiles — FILAMENT treatment.
+ *
+ * Rest carries NO fill and NO edge: an off toggle is the void with a label on
+ * it. That is the whole idea — the previous pass washed every tile in
+ * rgba(deep, 0.07), so ten pill tiles meant ten tinted slabs and the grid never
+ * returned to the void. Design rule 8 says accent intensity scales inversely
+ * with area; a resting wash is the largest-area accent in the whole theme.
+ *
+ * Feedback arrives only on interaction, and state is drawn as an EDGE, never a
+ * slab (see the :checked block). This matches how the panel buttons already
+ * behave (design rule 3: no highlight box in any state, the text powers up).
+ *
+ * Edges are inset box-shadows, never borders. A border would add to the box
+ * and shift stock's centred content by its width — inset shadows draw inside
+ * the existing geometry, which is what keeps this recolor-only.
+ *
+ * The calendar day cells are painted the surface grey by stock, so they're
+ * neutralised in the calendar rules further down. */
 ${R} .quick-settings .quick-toggle,
 ${R} .quick-settings .icon-button,
 ${R} .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button,
@@ -482,10 +518,14 @@ ${R} .message-list-controls .message-list-clear-button,
 ${R} .message-list .message-close-button,
 ${R} .message-list .message-expand-button,
 ${R} .message-list .message-collapse-button {
-    background-color: ${rgba(p.deep, 0.07)};
-    color: ${p.rest};
+    background-color: transparent;
+    box-shadow: none;
+    color: ${rgba(p.rest, 0.82)};
 }
 
+/* Hover is the only place a resting tile gains a fill, and it is deliberately
+ * faint — enough to confirm the pointer is on a control (the tiles have no
+ * resting edge to highlight), not enough to read as a slab. */
 ${R} .quick-settings .quick-toggle:hover,
 ${R} .quick-settings .icon-button:hover,
 ${R} .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:hover,
@@ -494,7 +534,7 @@ ${R} .message-list-controls .message-list-clear-button:hover,
 ${R} .message-list .message-close-button:hover,
 ${R} .message-list .message-expand-button:hover,
 ${R} .message-list .message-collapse-button:hover {
-    background-color: ${rgba(p.deep, 0.14)};
+    background-color: ${rgba(p.deep, 0.06)};
     color: ${p.deep};
 }
 
@@ -506,7 +546,7 @@ ${R} .message-list-controls .message-list-clear-button:active,
 ${R} .message-list .message-close-button:active,
 ${R} .message-list .message-expand-button:active,
 ${R} .message-list .message-collapse-button:active {
-    background-color: ${rgba(p.deep, 0.20)};
+    background-color: ${rgba(p.deep, 0.11)};
     color: ${p.deep};
 }
 
@@ -515,23 +555,33 @@ ${R} .quick-settings .icon-button:insensitive,
 ${R} .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:insensitive,
 ${R} .message-list-controls .message-list-clear-button:insensitive,
 ${R} .datemenu-popover .events-button:insensitive {
-    background-color: ${rgba(p.deep, 0.03)};
-    color: ${rgba(p.rest, 0.38)};
+    background-color: transparent;
+    box-shadow: none;
+    color: ${rgba(p.rest, 0.34)};
 }
 
 /* The "on" state — every one of these derives from -st-accent-color in stock,
- * so ALL must be restated or the missed ones keep the system accent. LARGE
- * tiles get a quiet wash + a lit 2px edge; text stays the DEEP accent (the
- * pale variant is too close to rest to read as a state change). */
+ * so ALL must be restated or the missed ones keep the system accent.
+ *
+ * FILAMENT: no fill at all. State is a 2px lit ring on the pill edge plus deep
+ * text. Full-saturation accent is fine here precisely because a hairline is a
+ * tiny area (design rule 8) — the same colour across a 12em x 3.27em fill is
+ * the wall of neon that rule exists to prevent. The ring reads as a circuit
+ * carrying current, which is the thing being aimed at.
+ *
+ * Text stays the DEEP accent, not the pale variant: pale sits a few points off
+ * the resting colour and stops reading as a change at all. */
 ${R} .quick-settings .quick-toggle:checked,
 ${R} .quick-settings .quick-toggle:focus:checked,
 ${R} .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked,
 ${R} .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:focus {
-    background-color: ${rgba(p.bright, 0.13)};
-    box-shadow: inset 0 0 0 2px ${rgba(p.bright, 0.45)};
+    background-color: transparent;
+    box-shadow: inset 0 0 0 2px ${rgba(p.deep, 0.85)};
     color: ${p.deep};
 }
 
+/* Hovering an already-on tile: the ring goes full strength and the faintest
+ * wash appears, so on+hover is still distinguishable from on. */
 ${R} .quick-settings .quick-toggle:hover:checked,
 ${R} .quick-settings .quick-toggle:focus:hover:checked,
 ${R} .quick-settings .quick-toggle:active:checked,
@@ -542,8 +592,8 @@ ${R} .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:fo
 ${R} .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:active,
 ${R} .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:active:hover,
 ${R} .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:active:focus {
-    background-color: ${rgba(p.bright, 0.20)};
-    box-shadow: inset 0 0 0 2px ${rgba(p.bright, 0.62)};
+    background-color: ${rgba(p.deep, 0.08)};
+    box-shadow: inset 0 0 0 2px ${p.deep};
     color: ${p.deep};
 }
 
@@ -566,16 +616,18 @@ ${R} .quick-settings .quick-toggle:checked .quick-toggle-subtitle {
     color: ${rgba(p.rest, 0.75)};
 }
 
+/* On but unavailable: the ring survives so state is still readable, dimmed to
+ * match the text. */
 ${R} .quick-settings .quick-toggle:insensitive:checked {
-    background-color: ${rgba(p.bright, 0.08)};
-    box-shadow: inset 0 0 0 2px ${rgba(p.bright, 0.24)};
-    color: ${rgba(p.rest, 0.45)};
+    background-color: transparent;
+    box-shadow: inset 0 0 0 2px ${rgba(p.deep, 0.28)};
+    color: ${rgba(p.rest, 0.40)};
 }
 
 /* A has-menu pill is TWO actors in one rounded parent — ring the PARENT once
  * (per-half rings drew three stacked lines with the separator). */
 ${R} .quick-settings .quick-toggle-has-menu:checked {
-    box-shadow: inset 0 0 0 2px ${rgba(p.bright, 0.45)};
+    box-shadow: inset 0 0 0 2px ${rgba(p.deep, 0.85)};
 }
 
 ${R} .quick-settings .quick-toggle-has-menu:checked .quick-toggle,
@@ -583,11 +635,13 @@ ${R} .quick-settings .quick-toggle-has-menu:checked .quick-toggle-menu-button {
     box-shadow: none;
 }
 
+/* The divider between a has-menu pill's two halves. Dim at rest — with no tile
+ * edges to relate to it would otherwise be the only line on an off tile. */
 ${R} .quick-settings .quick-toggle-has-menu .quick-toggle-separator {
-    background-color: ${rgba(p.bright, 0.22)};
+    background-color: ${rgba(p.rest, 0.16)};
 }
 ${R} .quick-settings .quick-toggle-has-menu:checked .quick-toggle-separator {
-    background-color: ${rgba(p.bright, 0.42)};
+    background-color: ${rgba(p.deep, 0.55)};
 }
 
 /* Sliders — the fill is an St-specific property, the handle is plain color.
