@@ -323,6 +323,28 @@ function sharedBlock() {
     font-family: "JetBrains Mono", monospace;
 }
 
+/* Tile width — the SECOND deliberate geometry exception, and a direct
+ * consequence of the first: stock sets min-width AND max-width 12em on tiles,
+ * sized for Cantarell. JetBrains Mono is wider, and the longest stock title
+ * ("Do Not Disturb") measures 12.14em uncapped (tools/qsprobe.js) — so under
+ * stock's cap it ellipsised on the live pane ("Do Not Distu…"). 13em fits it
+ * with headroom; min = max keeps stock's uniform-tile mechanism intact, and
+ * the pane only grows ~2em total. Long DYNAMIC content (SSID subtitles etc.)
+ * still ellipsises, which is correct — this is sized for the fixed titles. */
+.modern-bar-popups .quick-settings .quick-toggle,
+.modern-bar-popups .quick-settings .quick-toggle-has-menu {
+    min-width: 13em;
+    max-width: 13em;
+}
+
+/* The inner half of a has-menu pill must stay free-width inside its parent
+ * (stock sets it auto; restated here only because the rule above raises the
+ * bare .quick-toggle bound that stock's auto would otherwise inherit from). */
+.modern-bar-popups .quick-settings .quick-toggle-has-menu .quick-toggle {
+    min-width: auto;
+    max-width: auto;
+}
+
 .modern-bar-popups .modern-bar-popup .modern-bar-popup-header {
     font-size: 8.5pt;
     font-weight: bold;
@@ -563,11 +585,24 @@ ${R} .datemenu-popover .events-button:insensitive {
 /* The "on" state — every one of these derives from -st-accent-color in stock,
  * so ALL must be restated or the missed ones keep the system accent.
  *
- * FILAMENT: no fill at all. State is a 2px lit ring on the pill edge plus deep
- * text. Full-saturation accent is fine here precisely because a hairline is a
- * tiny area (design rule 8) — the same colour across a 12em x 3.27em fill is
- * the wall of neon that rule exists to prevent. The ring reads as a circuit
+ * FILAMENT: no fill, state is a 2px lit ring on the pill edge plus deep text.
+ * Full-saturation accent is fine here precisely because a hairline is a tiny
+ * area (design rule 8) — the same colour across a 12em x 3.27em fill is the
+ * wall of neon that rule exists to prevent. The ring reads as a circuit
  * carrying current, which is the thing being aimed at.
+ *
+ * ⚠ THE 4% WASH IS LOAD-BEARING, NOT DESIGN. St only PAINTS an inset
+ * box-shadow when the node has a paintable background (or border): a fully
+ * transparent background resolves the shadow but renders nothing. Found the
+ * hard way on the first live test — every checked ring in the pane was
+ * invisible, and the one ring that DID show was a focus ring, whose stock
+ * rules happen to also set a background. Verified by pixel-probe
+ * (tools/qspaint.js, 2026-07-29): four identical ring declarations, and only
+ * the node with a background painted one. rgba(deep, 0.04) over the #04070d
+ * void shifts each channel by ~2/255 — invisible, but it satisfies the paint
+ * precondition. A border can't do this job: St borders add to the box and
+ * would shift stock's centred content. DO NOT "clean up" the wash to
+ * transparent; the ring goes with it.
  *
  * Text stays the DEEP accent, not the pale variant: pale sits a few points off
  * the resting colour and stops reading as a change at all. */
@@ -575,7 +610,7 @@ ${R} .quick-settings .quick-toggle:checked,
 ${R} .quick-settings .quick-toggle:focus:checked,
 ${R} .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked,
 ${R} .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:focus {
-    background-color: transparent;
+    background-color: ${rgba(p.deep, 0.04)};
     box-shadow: inset 0 0 0 2px ${rgba(p.deep, 0.85)};
     color: ${p.deep};
 }
@@ -617,16 +652,20 @@ ${R} .quick-settings .quick-toggle:checked .quick-toggle-subtitle {
 }
 
 /* On but unavailable: the ring survives so state is still readable, dimmed to
- * match the text. */
+ * match the text. (3% wash: same paint precondition as the checked block.) */
 ${R} .quick-settings .quick-toggle:insensitive:checked {
-    background-color: transparent;
+    background-color: ${rgba(p.deep, 0.03)};
     box-shadow: inset 0 0 0 2px ${rgba(p.deep, 0.28)};
     color: ${rgba(p.rest, 0.40)};
 }
 
 /* A has-menu pill is TWO actors in one rounded parent — ring the PARENT once
- * (per-half rings drew three stacked lines with the separator). */
+ * (per-half rings drew three stacked lines with the separator). Stock never
+ * paints the parent AT ALL (it fills the halves), so without our wash the
+ * parent has no background and the ring is skipped — this was exactly the
+ * "Wired has no ring while Dark Style does" live bug. */
 ${R} .quick-settings .quick-toggle-has-menu:checked {
+    background-color: ${rgba(p.deep, 0.04)};
     box-shadow: inset 0 0 0 2px ${rgba(p.deep, 0.85)};
 }
 
@@ -827,6 +866,32 @@ ${R} .message-list .message-expand-button:focus,
 ${R} .message-list .message-collapse-button:focus,
 ${R} .message-list-controls .message-list-clear-button:focus {
     box-shadow: inset 0 0 0 2px ${rgba(p.deep, 0.80)} !important;
+}
+
+/* Paint-wash for focus rings on VOID-RESTING controls. Same St precondition
+ * as the checked block: an inset shadow is only painted over a paintable
+ * background, and filament leaves these controls fully transparent at rest —
+ * so a keyboard-focus ring on them would silently not render, which is an
+ * accessibility failure ("focus rings must stay unmistakable", design rules).
+ * Deliberately EXCLUDES the nodes that already have real backgrounds — the
+ * cards (events/world-clocks/weather/message, .quick-toggle-menu) and the
+ * calendar today-circle — where this wash would REPLACE a stronger fill. */
+${R} .quick-settings .quick-toggle:focus,
+${R} .quick-settings .icon-button:focus,
+${R} .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:focus,
+${R} .quick-settings .quick-slider .slider-bin:focus,
+${R} .quick-toggle-menu .popup-menu-item:focus,
+${R} .calendar:focus,
+${R} .calendar .calendar-day:focus,
+${R} .calendar .calendar-day-heading:focus,
+${R} .calendar .calendar-month-header .pager-button:focus,
+${R} .calendar .calendar-month-header .calendar-month-label:focus,
+${R} .datemenu-today-button:focus,
+${R} .message-list .message-close-button:focus,
+${R} .message-list .message-expand-button:focus,
+${R} .message-list .message-collapse-button:focus,
+${R} .message-list-controls .message-list-clear-button:focus {
+    background-color: ${rgba(p.deep, 0.04)};
 }
 `;
 }
