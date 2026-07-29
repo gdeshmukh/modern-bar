@@ -146,6 +146,21 @@
     padding-right: 8px;
 }
 
+/* Tail slot: a marked SECOND value after the main one (currently the forecast
+ * rows' chance of rain). Smaller than the value it trails and set at the
+ * resting weight, so it reads as an annotation rather than a competing figure —
+ * the whole point is that it can't be mistaken for a third temperature. */
+.modern-bar-popups .modern-bar-popup .modern-bar-popup-tail-icon {
+    icon-size: 11px;
+    padding-left: 12px;
+    padding-right: 3px;
+}
+
+.modern-bar-popups .modern-bar-popup .modern-bar-popup-tail {
+    font-size: 8.5pt;
+    font-feature-settings: "tnum";
+}
+
 .modern-bar-popups .modern-bar-popup .modern-bar-popup-rowtop {
     padding-bottom: 3px;
 }
@@ -608,6 +623,14 @@
     color: #9fe8f0;
 }
 
+/* Tail (chance of rain): deliberately DIMMER than the value it trails. It is
+ * supplementary — a row without it is the normal case, and it must not pull the
+ * eye off the temperatures. */
+.modern-bar-popups.modern-bar-tron .modern-bar-popup .modern-bar-popup-tail-icon,
+.modern-bar-popups.modern-bar-tron .modern-bar-popup .modern-bar-popup-tail {
+    color: rgba(159, 232, 240, 0.65);
+}
+
 .modern-bar-popups.modern-bar-tron .modern-bar-popup .modern-bar-popup-caption {
     color: rgba(159, 232, 240, 0.5);
 }
@@ -1056,6 +1079,14 @@
 
 .modern-bar-popups.modern-bar-iso .modern-bar-popup .modern-bar-popup-icon {
     color: #c9d6db;
+}
+
+/* Tail (chance of rain): deliberately DIMMER than the value it trails. It is
+ * supplementary — a row without it is the normal case, and it must not pull the
+ * eye off the temperatures. */
+.modern-bar-popups.modern-bar-iso .modern-bar-popup .modern-bar-popup-tail-icon,
+.modern-bar-popups.modern-bar-iso .modern-bar-popup .modern-bar-popup-tail {
+    color: rgba(201, 214, 219, 0.65);
 }
 
 .modern-bar-popups.modern-bar-iso .modern-bar-popup .modern-bar-popup-caption {
@@ -1508,6 +1539,14 @@
     color: #e0c184;
 }
 
+/* Tail (chance of rain): deliberately DIMMER than the value it trails. It is
+ * supplementary — a row without it is the normal case, and it must not pull the
+ * eye off the temperatures. */
+.modern-bar-popups.modern-bar-clu .modern-bar-popup .modern-bar-popup-tail-icon,
+.modern-bar-popups.modern-bar-clu .modern-bar-popup .modern-bar-popup-tail {
+    color: rgba(224, 193, 132, 0.65);
+}
+
 .modern-bar-popups.modern-bar-clu .modern-bar-popup .modern-bar-popup-caption {
     color: rgba(224, 193, 132, 0.5);
 }
@@ -1956,6 +1995,14 @@
 
 .modern-bar-popups.modern-bar-rinzler .modern-bar-popup .modern-bar-popup-icon {
     color: #e5a983;
+}
+
+/* Tail (chance of rain): deliberately DIMMER than the value it trails. It is
+ * supplementary — a row without it is the normal case, and it must not pull the
+ * eye off the temperatures. */
+.modern-bar-popups.modern-bar-rinzler .modern-bar-popup .modern-bar-popup-tail-icon,
+.modern-bar-popups.modern-bar-rinzler .modern-bar-popup .modern-bar-popup-tail {
+    color: rgba(229, 169, 131, 0.65);
 }
 
 .modern-bar-popups.modern-bar-rinzler .modern-bar-popup .modern-bar-popup-caption {
@@ -2408,6 +2455,14 @@
     color: #eaa0a0;
 }
 
+/* Tail (chance of rain): deliberately DIMMER than the value it trails. It is
+ * supplementary — a row without it is the normal case, and it must not pull the
+ * eye off the temperatures. */
+.modern-bar-popups.modern-bar-sark .modern-bar-popup .modern-bar-popup-tail-icon,
+.modern-bar-popups.modern-bar-sark .modern-bar-popup .modern-bar-popup-tail {
+    color: rgba(234, 160, 160, 0.65);
+}
+
 .modern-bar-popups.modern-bar-sark .modern-bar-popup .modern-bar-popup-caption {
     color: rgba(234, 160, 160, 0.5);
 }
@@ -2858,6 +2913,14 @@
     color: #9fe0c0;
 }
 
+/* Tail (chance of rain): deliberately DIMMER than the value it trails. It is
+ * supplementary — a row without it is the normal case, and it must not pull the
+ * eye off the temperatures. */
+.modern-bar-popups.modern-bar-military .modern-bar-popup .modern-bar-popup-tail-icon,
+.modern-bar-popups.modern-bar-military .modern-bar-popup .modern-bar-popup-tail {
+    color: rgba(159, 224, 192, 0.65);
+}
+
 .modern-bar-popups.modern-bar-military .modern-bar-popup .modern-bar-popup-caption {
     color: rgba(159, 224, 192, 0.5);
 }
@@ -3306,6 +3369,14 @@
 
 .modern-bar-popups.modern-bar-utility .modern-bar-popup .modern-bar-popup-icon {
     color: #c0aee8;
+}
+
+/* Tail (chance of rain): deliberately DIMMER than the value it trails. It is
+ * supplementary — a row without it is the normal case, and it must not pull the
+ * eye off the temperatures. */
+.modern-bar-popups.modern-bar-utility .modern-bar-popup .modern-bar-popup-tail-icon,
+.modern-bar-popups.modern-bar-utility .modern-bar-popup .modern-bar-popup-tail {
+    color: rgba(192, 174, 232, 0.65);
 }
 
 .modern-bar-popups.modern-bar-utility .modern-bar-popup .modern-bar-popup-caption {

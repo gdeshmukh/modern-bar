@@ -181,7 +181,7 @@ export default class ModernBarExtension extends Extension {
         this._metrics = [
             new CpuMetric(this._settings, iconsPath, this._popupGroup),
             new WorkdayMetric(this._settings, iconsPath, this._popupGroup),
-            new WeatherMetric(this._settings, this._popupGroup),
+            new WeatherMetric(this._settings, iconsPath, this._popupGroup),
             new ClaudeMetric(this._settings, iconsPath, this._popupGroup),
         ];
         for (const m of this._metrics)

@@ -334,6 +334,21 @@ function sharedBlock() {
     padding-right: 8px;
 }
 
+/* Tail slot: a marked SECOND value after the main one (currently the forecast
+ * rows' chance of rain). Smaller than the value it trails and set at the
+ * resting weight, so it reads as an annotation rather than a competing figure —
+ * the whole point is that it can't be mistaken for a third temperature. */
+.modern-bar-popups .modern-bar-popup .modern-bar-popup-tail-icon {
+    icon-size: 11px;
+    padding-left: 12px;
+    padding-right: 3px;
+}
+
+.modern-bar-popups .modern-bar-popup .modern-bar-popup-tail {
+    font-size: 8.5pt;
+    font-feature-settings: "tnum";
+}
+
 .modern-bar-popups .modern-bar-popup .modern-bar-popup-rowtop {
     padding-bottom: 3px;
 }
@@ -806,6 +821,14 @@ ${R} .modern-bar-popup-value.modern-bar-alert {
 
 ${R} .modern-bar-popup-icon {
     color: ${p.rest};
+}
+
+/* Tail (chance of rain): deliberately DIMMER than the value it trails. It is
+ * supplementary — a row without it is the normal case, and it must not pull the
+ * eye off the temperatures. */
+${R} .modern-bar-popup-tail-icon,
+${R} .modern-bar-popup-tail {
+    color: ${rgba(p.rest, 0.65)};
 }
 
 ${R} .modern-bar-popup-caption {
