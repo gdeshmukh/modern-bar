@@ -1,0 +1,298 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Gaurav Deshmukh
+# This file is distributed under the same license as the Modern Bar package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Modern Bar 0.4.0\n"
+"Report-Msgid-Bugs-To: https://github.com/gdeshmukh/modern-bar/issues\n"
+"POT-Creation-Date: 2026-07-30 11:54-0700\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: prefs.js:83 prefs.js:87
+msgid "Show this metric in the panel"
+msgstr ""
+
+#: prefs.js:110
+msgid "Appearance"
+msgstr ""
+
+#: prefs.js:115
+msgid "Palette"
+msgstr ""
+
+#: prefs.js:116
+msgid ""
+"One shared deep-black grid; choose the circuit color that glows on it. "
+"Colors follow the Program lore."
+msgstr ""
+
+#: prefs.js:125
+msgid "Tron"
+msgstr ""
+
+#: prefs.js:125
+msgid "Blue — fights for the Users"
+msgstr ""
+
+#: prefs.js:126
+msgid "ISO"
+msgstr ""
+
+#: prefs.js:126
+msgid "White — the ISOs and the Users"
+msgstr ""
+
+#: prefs.js:127
+msgid "Clu"
+msgstr ""
+
+#: prefs.js:127
+msgid "Gold — the system administrator"
+msgstr ""
+
+#: prefs.js:128
+msgid "Rinzler"
+msgstr ""
+
+#: prefs.js:128
+msgid "Orange — repurposed to serve Clu"
+msgstr ""
+
+#: prefs.js:129
+msgid "Sark"
+msgstr ""
+
+#: prefs.js:129
+msgid "Red — loyal to the MCP"
+msgstr ""
+
+#: prefs.js:130
+msgid "Military"
+msgstr ""
+
+#: prefs.js:130
+msgid "Teal green — the tank drivers of ’82"
+msgstr ""
+
+#: prefs.js:131
+msgid "Utility"
+msgstr ""
+
+#: prefs.js:131
+msgid "Violet — data pushers and system utilities"
+msgstr ""
+
+#: prefs.js:136
+msgid "Circuit color"
+msgstr ""
+
+#: prefs.js:166
+msgid "Theme the dropdowns"
+msgstr ""
+
+#: prefs.js:167
+msgid ""
+"Apply the palette to Quick Settings and the clock/calendar menu. Off leaves "
+"them stock."
+msgstr ""
+
+#: prefs.js:176
+msgid "Close dropdowns on mouse away"
+msgstr ""
+
+#: prefs.js:177
+msgid ""
+"Quick Settings and the clock/calendar menu close when the pointer leaves, "
+"like the metric dropdowns. Clicking away, Escape and keyboard navigation "
+"still work as usual."
+msgstr ""
+
+#: prefs.js:190
+msgid "Metrics"
+msgstr ""
+
+#: prefs.js:202
+msgid "CPU"
+msgstr ""
+
+#: prefs.js:203
+msgid "Total CPU load. Click the metric for memory and load average."
+msgstr ""
+
+#: prefs.js:209
+msgid "Sample interval (seconds)"
+msgstr ""
+
+#: prefs.js:212 prefs.js:438
+msgid "Warning threshold (%)"
+msgstr ""
+
+#: prefs.js:213
+msgid "At or above this, the value shows in the alert color."
+msgstr ""
+
+#: prefs.js:220
+msgid "Workday"
+msgstr ""
+
+#: prefs.js:221
+msgid "Percent of the work day elapsed. Hidden outside these hours."
+msgstr ""
+
+#: prefs.js:226
+msgid "Start time"
+msgstr ""
+
+#: prefs.js:227
+msgid "End time"
+msgstr ""
+
+#: prefs.js:236
+msgid "End is not after start — the metric will stay hidden."
+msgstr ""
+
+#: prefs.js:296
+msgid "Weather"
+msgstr ""
+
+#: prefs.js:297
+msgid ""
+"Current temperature from Open-Meteo (no API key). Click the metric for "
+"details and a 7-day outlook."
+msgstr ""
+
+#: prefs.js:304
+msgid "Location"
+msgstr ""
+
+#: prefs.js:324
+msgid "Coordinates"
+msgstr ""
+
+#: prefs.js:328
+msgid "Latitude"
+msgstr ""
+
+#: prefs.js:331
+msgid "Longitude"
+msgstr ""
+
+#: prefs.js:341
+msgid "Temperature unit"
+msgstr ""
+
+#: prefs.js:343
+msgid "Fahrenheit (°F)"
+msgstr ""
+
+#: prefs.js:343
+msgid "Celsius (°C)"
+msgstr ""
+
+#: prefs.js:361
+msgid "Refresh interval (minutes)"
+msgstr ""
+
+#: prefs.js:386
+#, javascript-format
+msgid "No match for “%s”."
+msgstr ""
+
+#: prefs.js:393
+#, javascript-format
+msgid "Location set to %s."
+msgstr ""
+
+#: prefs.js:395
+msgid "Could not look up that location."
+msgstr ""
+
+#: prefs.js:414
+msgid ""
+"Your account 5-hour usage %, read via the OAuth token Claude Code already "
+"stores locally (~/.claude). No login or API key; the token is only ever sent "
+"to Anthropic. Off by default — nothing is read and no request is made until "
+"you turn it on."
+msgstr ""
+
+#: prefs.js:420
+msgid ""
+"Claude Code credentials were not found on this machine, so the metric will "
+"stay hidden."
+msgstr ""
+
+#: prefs.js:425
+msgid "Claude usage"
+msgstr ""
+
+#: prefs.js:431
+msgid "Refresh interval (seconds)"
+msgstr ""
+
+#: prefs.js:432
+msgid ""
+"Below ~30s the endpoint starts rate-limiting; the last value is kept and "
+"retried, so the number goes stale rather than away."
+msgstr ""
+
+#: prefs.js:439
+msgid ""
+"At or above this 5-hour utilization, the value shows in the alert color."
+msgstr ""
+
+#: prefs.js:448
+msgid "About"
+msgstr ""
+
+#: prefs.js:456
+msgid "Modern Bar"
+msgstr ""
+
+#: prefs.js:457
+#, javascript-format
+msgid "Version %s · GNOME Shell %s"
+msgstr ""
+
+#: prefs.js:464
+msgid "Homepage"
+msgstr ""
+
+#: prefs.js:465
+msgid "Report an issue"
+msgstr ""
+
+#: prefs.js:470
+msgid "Reset all settings…"
+msgstr ""
+
+#: prefs.js:476
+msgid ""
+"Claude and the Claude logo are trademarks of Anthropic, PBC. This extension "
+"is an independent project and is not affiliated with or endorsed by "
+"Anthropic. Weather data by Open-Meteo.com."
+msgstr ""
+
+#: prefs.js:503
+msgid "Reset all settings?"
+msgstr ""
+
+#: prefs.js:504
+msgid "Every Modern Bar option returns to its default."
+msgstr ""
+
+#: prefs.js:506
+msgid "Cancel"
+msgstr ""
+
+#: prefs.js:507
+msgid "Reset"
+msgstr ""
