@@ -142,9 +142,13 @@
 
     <!-- ── Claude usage metric ────────────────────────────────────────── -->
     <key name="show-claude" type="b">
-      <default>true</default>
-      <summary>Show the Claude usage metric</summary>
-      <description>Master toggle for the Claude 5-hour usage indicator.</description>
+      <default>false</default>
+      <summary>Show the Claude usage metric (opt-in)</summary>
+      <description>Master toggle for the Claude 5-hour usage indicator. Off by
+        default: this metric reads the OAuth token Claude Code stores in
+        ~/.claude/.credentials.json and sends it to Anthropic's usage endpoint,
+        so it only ever runs after being explicitly enabled. While off, nothing
+        is read and no request is made.</description>
     </key>
 
     <key name="claude-refresh-seconds" type="i">
