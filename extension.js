@@ -133,9 +133,6 @@ export default class ModernBarExtension extends Extension {
         // NOTE: Tray / app-indicators are left VISIBLE. They sit on the right
         // near Quick Settings (the traditional spot) and balance the left-side
         // metrics cluster.
-        // TODO(Phase 3): the Claude usage metric was planned to REPLACE the
-        // Claude Desktop tray icon. Now that the tray is back, decide there
-        // whether the metric replaces that one icon (hide just it) or coexists.
 
         // 2. Remove the Activities button from the layout (far left). The Super
         //    key still opens the Overview (mutter overlay-key = 'Super'), so
@@ -190,6 +187,8 @@ export default class ModernBarExtension extends Extension {
             this._metricsBox.add_child(m);
 
         // Insert at the start of the panel's left box (leftmost position).
+        // _leftBox is private shell API — the standard way extensions add
+        // panel content, but the first thing to re-check on a shell upgrade.
         Main.panel._leftBox.insert_child_at_index(this._metricsBox, 0);
 
         // 4. Mouse-away dismissal for the SHELL's own dropdowns, so Quick

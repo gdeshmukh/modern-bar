@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
   <schema id="org.gnome.shell.extensions.modernbar"
-          path="/org/gnome/shell/extensions/modernbar/">
+          path="/org/gnome/shell/extensions/modernbar/"
+          gettext-domain="modernbar@gdesh.com">
 
     <!-- ── Palette (canon circuitry colors) ───────────────────────────────── -->
     <key name="palette" type="s">

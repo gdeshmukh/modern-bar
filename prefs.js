@@ -39,6 +39,15 @@ export default class ModernBarPreferences extends ExtensionPreferences {
             return false;   // let the window close normally
         });
 
+        // One Soup session per window for the geocoder, aborted with the
+        // window — otherwise every Apply click leaks a session to GC and a
+        // late reply can land after close.
+        this._geocodeSession = new Soup.Session({timeout: 10});
+        cleanup.push(() => {
+            this._geocodeSession.abort();
+            this._geocodeSession = null;
+        });
+
         window.search_enabled = true;
         window.add(this._buildAppearancePage(settings, track));
         window.add(this._buildMetricsPage(settings, window, track));
@@ -371,7 +380,9 @@ export default class ModernBarPreferences extends ExtensionPreferences {
 
     // Geocode a place name via Open-Meteo's free geocoding API, async.
     _geocode(name, settings, window) {
-        const session = new Soup.Session({timeout: 10});
+        const session = this._geocodeSession;
+        if (!session)
+            return;   // window already closed
         const url = 'https://geocoding-api.open-meteo.com/v1/search?' +
             `name=${encodeURIComponent(name)}&count=1&language=en&format=json`;
         const msg = Soup.Message.new('GET', url);
