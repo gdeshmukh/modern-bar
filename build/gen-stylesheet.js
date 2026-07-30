@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 // modern-bar — stylesheet generator
 //
 // St has no CSS variables, so every circuit palette must restate every

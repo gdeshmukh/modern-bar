@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 // modern-bar — extension.js
 //
 // Lifecycle + wiring. The panel look lives in stylesheet.css (auto-loaded).

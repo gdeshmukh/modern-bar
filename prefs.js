@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
 // modern-bar — prefs.js
 //
 // The preferences window shown by the Extensions app (the gear icon) and by
