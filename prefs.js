@@ -413,7 +413,9 @@ export default class ModernBarPreferences extends ExtensionPreferences {
 
         let description = _('Your account 5-hour usage %, read via the OAuth ' +
             'token Claude Code already stores locally (~/.claude). No login or ' +
-            'API key; the token is only ever sent to Anthropic.');
+            'API key; the token is only ever sent to Anthropic. Off by ' +
+            'default — nothing is read and no request is made until you ' +
+            'turn it on.');
         if (!haveCreds) {
             description += ' ' + _('Claude Code credentials were not found on ' +
                 'this machine, so the metric will stay hidden.');
@@ -469,6 +471,14 @@ export default class ModernBarPreferences extends ExtensionPreferences {
         reset.add_css_class('destructive-action');
         reset.connect('activated', () => this._confirmReset(settings, window));
         maint.add(reset);
+
+        const legal = new Adw.PreferencesGroup({
+            description: _('Claude and the Claude logo are trademarks of ' +
+                'Anthropic, PBC. This extension is an independent project ' +
+                'and is not affiliated with or endorsed by Anthropic. ' +
+                'Weather data by Open-Meteo.com.'),
+        });
+        page.add(legal);
 
         return page;
     }
