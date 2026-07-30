@@ -1,10 +1,10 @@
 {
   "uuid": "modernbar@gdesh.com",
   "name": "Modern Bar",
-  "description": "Themes the GNOME top panel to match a flat neon-on-near-black terminal aesthetic (Tron day / Clu night palettes, themed Quick Settings and calendar), and adds a compact metrics cluster: CPU, workday progress, weather, and Claude usage — each with a click-open detail dropdown.",
+  "description": "Tron-style theme for the top panel: neon circuit colors on a flat deep-black background, in seven selectable palettes (blue, white, gold, orange, red, teal, violet). Quick Settings and the calendar dropdown are recolored to match — colors only, no layout changes, and it can be toggled off.\n\nAdds a compact metrics cluster on the left, each with a click-open detail dropdown: CPU load, workday progress, weather, and (optional, off by default) Claude account usage.\n\nNetwork access: weather and location search use the Open-Meteo API (no account, no API key; only coordinates are sent). The Claude usage metric is opt-in: when enabled, it reads the OAuth token that Claude Code already stores locally and sends it only to Anthropic's own usage endpoint. Nothing is read or sent while it is off, and no other data leaves the machine.",
   "shell-version": ["50"],
-  "url": "https://github.com/gdesh/modern-bar",
-  "version-name": "0.3.0",
+  "url": "https://github.com/gdeshmukh/modern-bar",
+  "version-name": "0.4.0",
   "settings-schema": "org.gnome.shell.extensions.modernbar",
   "gettext-domain": "modernbar@gdesh.com"
 }
