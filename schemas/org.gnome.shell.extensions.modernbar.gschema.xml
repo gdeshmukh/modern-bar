@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
   <schema id="org.gnome.shell.extensions.modernbar"
-          path="/org/gnome/shell/extensions/modernbar/">
+          path="/org/gnome/shell/extensions/modernbar/"
+          gettext-domain="modernbar@gdesh.com">
 
     <!-- ── Palette (canon circuitry colors) ───────────────────────────────── -->
     <key name="palette" type="s">
@@ -75,14 +76,14 @@
 
     <!-- ── Weather metric ─────────────────────────────────────────────── -->
     <key name="location-label" type="s">
-      <default>'San Ramon'</default>
+      <default>'Cupertino'</default>
       <summary>Location display/search name</summary>
       <description>City name shown/searched. Geocoded to coordinates when changed in prefs.</description>
     </key>
 
     <key name="latitude" type="d">
       <range min="-90.0" max="90.0"/>
-      <default>37.77993</default>
+      <default>37.32300</default>
       <summary>Weather latitude</summary>
       <description>Latitude used for the Open-Meteo weather query. Usually set
         by geocoding the location name in prefs; directly editable there too
@@ -91,7 +92,7 @@
 
     <key name="longitude" type="d">
       <range min="-180.0" max="180.0"/>
-      <default>-121.97802</default>
+      <default>-122.03220</default>
       <summary>Weather longitude</summary>
       <description>Longitude used for the Open-Meteo weather query. See latitude.</description>
     </key>
