@@ -250,6 +250,14 @@ function sharedBlock() {
     padding-right: 4px;   /* the only glyph→number gap (labels have no leading space) */
 }
 
+/* Connection-lost marker, shown only while a metric is powered down (stale or
+ * failing — the .modern-bar-stale state below). Smaller than the metric glyphs
+ * so it reads as an annotation on the reading, not another reading. */
+#panel.modern-bar .modern-bar-stale-icon {
+    icon-size: 11px;
+    padding-left: 5px;
+}
+
 /* Every label/clock/indicator inherits the panel font; flat buttons — no
  * rounded pill background/outline in ANY state (state feedback is purely the
  * text/icon powering up to the palette's deep accent, set per palette). */
@@ -456,6 +464,30 @@ ${P} .clock-display:checked .clock {
 ${P} .modern-bar-alert,
 ${P} .modern-bar-metric:hover .modern-bar-metric-label.modern-bar-alert {
     color: ${p.alert};
+}
+
+/* Powered down — a metric whose reading is stale or whose fetches are failing
+ * (.modern-bar-stale, set in JS). The circuit dims below rest: in the
+ * rest/bright/deep liveness language, "no current". Beats the alert rule above
+ * on specificity AND order, deliberately: a stale 100% must not blaze — data
+ * we can't vouch for doesn't get to raise alarms. */
+${P} .modern-bar-metric.modern-bar-stale,
+${P} .modern-bar-metric.modern-bar-stale .modern-bar-metric-label,
+${P} .modern-bar-metric.modern-bar-stale .modern-bar-metric-label.modern-bar-alert,
+${P} .modern-bar-metric.modern-bar-stale .modern-bar-metric-icon,
+${P} .modern-bar-metric.modern-bar-stale .modern-bar-weather-icon,
+${P} .modern-bar-metric.modern-bar-stale .modern-bar-stale-icon {
+    color: ${rgba(p.rest, 0.45)};
+}
+
+/* Hover still powers a stale metric up to the deep accent: the widget stays
+ * clickable — opening its popup is the manual refresh — so the power-up is
+ * the invitation. Last, to win over the dim rules above. */
+${P} .modern-bar-metric.modern-bar-stale:hover .modern-bar-metric-label,
+${P} .modern-bar-metric.modern-bar-stale:hover .modern-bar-metric-icon,
+${P} .modern-bar-metric.modern-bar-stale:hover .modern-bar-weather-icon,
+${P} .modern-bar-metric.modern-bar-stale:hover .modern-bar-stale-icon {
+    color: ${p.deep};
 }
 `;
 }
