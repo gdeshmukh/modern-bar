@@ -7,7 +7,7 @@
 //      including the circuit palette (`palette` enum in prefs; `night-mode`
 //      survives only as a deprecated scripting alias)
 //   2. collapses the Activities button (Super key still opens the Overview)
-//   3. mounts the metrics cluster (CPU / Workday / Weather) on the LEFT, where
+//   3. mounts the metrics cluster on the LEFT, where
 //      Activities was; each reads config from GSettings and tears down its own
 //      timers/signals. This file owns their container.
 //
@@ -22,6 +22,7 @@ import {CpuMetric} from './lib/cpuMetric.js';
 import {WorkdayMetric} from './lib/workdayMetric.js';
 import {WeatherMetric} from './lib/weatherMetric.js';
 import {ClaudeMetric} from './lib/claudeMetric.js';
+import {CodexMetric} from './lib/codexMetric.js';
 import {MetricPopupGroup} from './lib/metricPopup.js';
 import {MenuProximityDismiss} from './lib/menuProximity.js';
 
@@ -158,8 +159,7 @@ export default class ModernBarExtension extends Extension {
             this._activitiesHidden = true;
         }
 
-        // 3. Metrics cluster on the LEFT (where Activities was). One container
-        //    holds the three indicators in order: CPU, Workday, Weather. Each
+        // 3. Metrics cluster on the LEFT (where Activities was). Each metric
         //    reads config from GSettings and manages its own timers.
         this._metricsBox = new St.BoxLayout({
             style_class: 'modern-bar-metrics',
@@ -182,6 +182,7 @@ export default class ModernBarExtension extends Extension {
             new WorkdayMetric(this._settings, iconsPath, this._popupGroup),
             new WeatherMetric(this._settings, iconsPath, this._popupGroup),
             new ClaudeMetric(this._settings, iconsPath, this._popupGroup),
+            new CodexMetric(this._settings, iconsPath, this._popupGroup),
         ];
         for (const m of this._metrics)
             this._metricsBox.add_child(m);

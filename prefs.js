@@ -203,6 +203,7 @@ export default class ModernBarPreferences extends ExtensionPreferences {
         this._addWorkdayGroup(page, settings, track);
         this._addWeatherGroup(page, settings, window, track);
         this._addClaudeGroup(page, settings);
+        this._addCodexGroup(page, settings);
         return page;
     }
 
@@ -419,17 +420,16 @@ export default class ModernBarPreferences extends ExtensionPreferences {
     _addClaudeGroup(page, settings) {
         const creds = GLib.build_filenamev(
             [GLib.get_home_dir(), '.claude', '.credentials.json']);
-        // Existence check only — the file itself is never read from prefs.
         const haveCreds = GLib.file_test(creds, GLib.FileTest.EXISTS);
 
         let description = _('Your account 5-hour usage %, read via the OAuth ' +
             'token Claude Code already stores locally (~/.claude). No login or ' +
             'API key; the token is only ever sent to Anthropic. Off by ' +
-            'default — nothing is read and no request is made until you ' +
-            'turn it on.');
+            'default — the credential file is not opened and no request is ' +
+            'made until you turn it on.');
         if (!haveCreds) {
             description += ' ' + _('Claude Code credentials were not found on ' +
-                'this machine, so the metric will stay hidden.');
+                'this machine, so the metric will stay powered down.');
         }
 
         const [group, addRow] = this._metricGroup(settings, 'show-claude', {
@@ -449,6 +449,41 @@ export default class ModernBarPreferences extends ExtensionPreferences {
             title: _('Warning threshold (%)'),
             subtitle: _('At or above this 5-hour utilization, the value shows ' +
                 'in the alert color.'),
+            step: 5,
+        }));
+    }
+
+    _addCodexGroup(page, settings) {
+        const creds = GLib.build_filenamev(
+            [GLib.get_home_dir(), '.codex', 'auth.json']);
+        const haveCreds = GLib.file_test(creds, GLib.FileTest.EXISTS);
+
+        let description = _('Your Codex account usage, read with the ChatGPT ' +
+            'login Codex stores locally (~/.codex). The panel shows the shortest ' +
+            'quota window OpenAI reports; click it for every reported window. ' +
+            'The access token and account ID are sent only to ChatGPT. Off by ' +
+            'default — the credential file is not opened and no request is made ' +
+            'until you turn it on.');
+        if (!haveCreds) {
+            description += ' ' + _('Codex credentials were not found on this ' +
+                'machine, so the metric will stay powered down.');
+        }
+
+        const [group, addRow] = this._metricGroup(settings, 'show-codex', {
+            title: _('Codex usage'),
+            description,
+        });
+        page.add(group);
+
+        addRow(this._spinRow(settings, 'codex-refresh-seconds', {
+            title: _('Refresh interval (seconds)'),
+            subtitle: _('The last value is retained through transient failures.'),
+            step: 10,
+        }));
+        addRow(this._spinRow(settings, 'codex-warn-percent', {
+            title: _('Warning threshold (%)'),
+            subtitle: _('At or above this usage, the displayed window shows in ' +
+                'the alert color.'),
             step: 5,
         }));
     }
@@ -535,7 +570,8 @@ export default class ModernBarPreferences extends ExtensionPreferences {
         for (const key of settings.settings_schema.list_keys()) {
             // The usage cache is state, not preference — wiping it would blank
             // the panel number for no user benefit.
-            if (key.startsWith('claude-cache-') || key === 'night-mode')
+            if (key.endsWith('-cache-percent') ||
+                key.endsWith('-cache-time') || key === 'night-mode')
                 continue;
             settings.reset(key);
         }

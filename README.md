@@ -21,6 +21,10 @@ Activities button used to be.
   - **Claude usage** *(off by default)* — your Claude account's 5-hour
     usage window, for people who run [Claude Code](https://claude.com/claude-code)
     and want the number on the panel instead of in a terminal.
+  - **Codex usage** *(off by default)* — the shortest account quota window
+    OpenAI reports. If the account has both a short and weekly window, the
+    dropdown shows both; if OpenAI reports only a weekly window, that is the
+    panel value.
 - **Mouse-away dismissal** — Quick Settings and the calendar close when the
   pointer leaves them, like the metric dropdowns. Click-outside, Escape and
   keyboard navigation are untouched, and it's a preference if you'd rather
@@ -66,7 +70,12 @@ gnome-extensions enable modernbar@gdesh.com
   and sends it to Anthropic's own usage endpoint — the same number the
   Claude app shows. The token is read fresh per request, never stored or
   logged by the extension, and never sent anywhere except Anthropic. While
-  the metric is off, nothing is read and no request is made.
+  the metric is off, the credential file is not opened and no request is made.
+- **Codex usage** is also opt-in and off by default. When enabled, it reads
+  the ChatGPT access token and account ID Codex stores in `~/.codex/auth.json`
+  and sends them only to ChatGPT's account-usage endpoint. The extension
+  caches only the resulting percentage and update time. While the metric is
+  off, the credential file is not opened and no request is made.
 - No telemetry, no analytics, nothing else leaves the machine.
 
 ## Translations
