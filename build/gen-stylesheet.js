@@ -1,42 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// modern-bar — stylesheet generator
-//
-// St has no CSS variables, so every circuit palette must restate every
-// accent-bearing rule. Two palettes were maintainable by hand; seven are not.
-// This script is now the SOURCE OF TRUTH for stylesheet.css:
-//
-//     gjs -m build/gen-stylesheet.js        (or: make stylesheet)
-//
-// It writes:
-//   - stylesheet.css            (committed build artifact — DO NOT hand-edit)
-//   - tools/palette-preview.html (dev-only eyeball page, git-excluded)
-// and it FAILS the build if any palette's text roles drop below the contrast
-// floors, so "themed" can never quietly become "unreadable".
-//
-// ── The system ─────────────────────────────────────────────────────────────
-// One shared background for every palette: #04070d, the blueish deep black of
-// the Legacy grid (and of the kitty day terminal — the seamless-panel rule).
-// Palettes change only the CIRCUIT color on top of that void, per the canon
-// circuitry-color table (tron.fandom.com/wiki/Program):
-//
-//   tron      blue-white — neutral programs, fights for the Users
-//   iso       white      — the ISOs and the Users
-//   clu       gold       — the system administrator himself
-//   rinzler   orange     — programs repurposed to serve Clu
-//   sark      red        — loyal to the MCP (and Dillinger's grid in Ares)
-//   military  teal green — the military programs of the '82 system
-//   utility   violet     — data pushers and system utilities of '82
-//
-// Each palette is a five-step glow ladder + an alert color:
-//   rest    dim, LOW-CHROMA tint — circuits idling. Most text sits here.
-//   bright  pale variant — solid fills on SMALL surfaces, meter fills, sliders
-//   deep    full saturation — hover/active/checked, headers, today-circle.
-//           The "power-up": color earns full energy only when touched/on.
-//   fore    near-white with a breath of the hue — popup values, primary text
-//   alert   the OPPOSING faction's color, so warnings read as an intrusion:
-//           cool palettes flare ember orange, warm palettes flare cold blue.
-// Large areas never get solid deep — washes are alpha steps of deep/bright
-// (design rule: accent intensity scales inversely with area).
+// Generates the stylesheet and palette preview. St lacks CSS variables, so
+// accent rules are templated per palette and checked for contrast/schema drift.
 
 import GLib from 'gi://GLib';
 import System from 'system';
@@ -44,15 +8,9 @@ import System from 'system';
 const HERE = GLib.path_get_dirname(GLib.filename_from_uri(import.meta.url)[0]);
 const ROOT = GLib.path_get_dirname(HERE);
 
-// ── Palette data ────────────────────────────────────────────────────────────
-// `label`/`lore` are what prefs shows (also exported for prefs.js via
-// `gjs -m build/gen-stylesheet.js --list`, keeping one source of truth).
-const BG = '#04070d';           // the shared void — every palette, every surface
-const EMBER = '#ff8a4d';        // alert on cool palettes (the repurposed flare)
-// Alert on warm palettes (the intrusion blue). Was #3d94e0 (the kitty night
-// alert); lifted after the OKLCH audit — it sat 0.10 L dimmer than ember, so
-// warnings hit softer on warm palettes than cool ones. #51aafa matches ember's
-// punch (L 0.72 vs 0.75; the residue is blue's sRGB gamut ceiling, not taste).
+const BG = '#04070d';
+const EMBER = '#ff8a4d';
+// Cold alerts should carry similar perceived weight to ember alerts.
 const COLD = '#51aafa';
 
 const PALETTES = [
@@ -62,10 +20,7 @@ const PALETTES = [
         alert: EMBER,
     },
     {
-        // Achromatic by design: it can only power up by LIGHTNESS, and the
-        // white-hot flare IS the ISO identity — its outsized rest→deep jump is
-        // accepted, not an error. bright was #eef4f6, dropped to the bright-role
-        // median so a meter fill stops being a near-twin of a checked toggle.
+        // Achromatic ISO powers up through lightness alone.
         name: 'iso', label: 'ISO', lore: 'White — the ISOs and the Users',
         rest: '#c9d6db', bright: '#dce3e6', deep: '#ffffff', fore: '#f7fbfc',
         alert: EMBER,
@@ -76,20 +31,11 @@ const PALETTES = [
         alert: COLD,
     },
     {
-        // deep was #ff7f3f: only 14.6° of OKLCH hue from sark's red (confusable
-        // under deuteranopia) and it HOVERED DARKER than rest instead of
-        // flaring. #ff9a43 re-spaces the warm trio (25.6°/28.7° gaps), matches
-        // rinzler's own rest/bright hue, and lands the power-up at exactly
-        // tron's constant-lightness chroma-flare. bright lifted to role median.
         name: 'rinzler', label: 'Rinzler', lore: 'Orange — repurposed to serve Clu',
         rest: '#e5a983', bright: '#ffbe95', deep: '#ff9a43', fore: '#ffe8da',
         alert: COLD,
     },
     {
-        // deep was #ff5540 (OKLab L 0.68 — brake-light-in-fog on this void; red
-        // at that chroma is gamut-capped, but it can come up). #ff705f keeps the
-        // menace while igniting on hover instead of darkening; the remaining
-        // −0.13 L vs the deep-role median is sRGB physics, not a design choice.
         name: 'sark', label: 'Sark', lore: 'Red — loyal to the MCP',
         rest: '#eaa0a0', bright: '#ffb8af', deep: '#ff705f', fore: '#ffe6e2',
         alert: COLD,
@@ -100,16 +46,12 @@ const PALETTES = [
         alert: EMBER,
     },
     {
-        // deep was #a37cff (same L-sag as sark — hover darkened); #ac8efd
-        // ignites instead. bright lifted so a meter fill separates from idle
-        // text (was dE 0.045 from rest — barely "lit").
         name: 'utility', label: 'Utility', lore: 'Violet — data pushers and system utilities',
         rest: '#c0aee8', bright: '#d2c1ff', deep: '#ac8efd', fore: '#ece5fb',
         alert: EMBER,
     },
 ];
 
-// ── Color helpers ───────────────────────────────────────────────────────────
 function channels(hex) {
     const h = hex.replace('#', '');
     return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16));
@@ -120,7 +62,7 @@ function rgba(hex, a) {
     return `rgba(${r}, ${g}, ${b}, ${a})`;
 }
 
-// WCAG relative luminance / contrast ratio.
+// WCAG 2 relative luminance.
 function luminance(hex) {
     const [r, g, b] = channels(hex).map(v => {
         const s = v / 255;
@@ -134,16 +76,10 @@ function contrast(a, b) {
     return (hi + 0.05) / (lo + 0.05);
 }
 
-// Panel/popup text is small (≈10pt), so the floors are strict. `bright` and
-// `alert` also appear as text (fills are washes, but meter fills and alert
-// values render solid), so they get floors too.
+// Small panel text requires strict contrast floors.
 const FLOORS = {rest: 6, bright: 6, deep: 4.5, fore: 10, alert: 4};
 
-// The schema's <choices> and this roster must agree, IN ORDER. Drift is a
-// silent visual failure: extension.js applies the unknown class, the shared
-// void stays, and every accent state falls back to the SYSTEM accent — the
-// exact Phase-4 bleed bug, with no error anywhere. So the build refuses.
-// (Regex-parsing is fine here: the schema is ours and the shape is fixed.)
+// Unknown palette classes silently fall back to the system accent.
 function checkSchemaRoster() {
     const xmlPath = GLib.build_filenamev(
         [ROOT, 'schemas', 'org.gnome.shell.extensions.modernbar.gschema.xml']);
@@ -179,53 +115,18 @@ function validate() {
         throw new Error('contrast floor violated — adjust the palette table');
 }
 
-// ── stylesheet.css ──────────────────────────────────────────────────────────
-
 function header() {
     return `\
-/* ─────────────────────────────────────────────────────────────────────────
- * modern-bar — stylesheet.css
- *
- * ██ GENERATED FILE — do not edit by hand. ██
- * Source of truth: build/gen-stylesheet.js (palette table + rule templates).
- * Regenerate with \`make stylesheet\` (runs gjs -m build/gen-stylesheet.js).
- *
- * A sibling of the "ENCOM/Tron" kitty terminal: flat, frameless, glowing
- * circuits on one shared blueish deep black (${BG}) — the void every canon
- * palette lies on top of. Palette classes (.modern-bar-<name>) swap ONLY the
- * circuit color; the background never changes. See the generator header for
- * the full ladder/role system and the canon color table.
- *
- * Structure of this file:
- *   1. SHARED  — geometry, fonts, the void background (palette-independent)
- *   2. PER PALETTE × (panel block + dropdown block + metric-popup block)
- *
- * The dropdown blocks keep the hard-won Phase-4 rules:
- *   - RECOLOR ONLY: never restate border-radius/padding/size — stock geometry
- *     is correct and leaving it alone is what keeps us upgrade-safe.
- *   - Focus rings carry !important (stock declares them !important; matching
- *     origin+important is the only way to win). They sit inset on the tile
- *     EDGE — any un-restated ring is an accent-bleed bug.
- *   - Never a bare .button/.icon-button/.flat/.message/.popup-menu-content/
- *     StScrollBar rule — those bases are shared with the login screen,
- *     Looking Glass and modal dialogs. Anchor on .quick-settings,
- *     .quick-toggle-menu, .datemenu-popover, .calendar, .message-list.
- *   - QS sub-menus are NOT inside .quick-settings (the overlay is a sibling
- *     of the boxpointer) — anchor sub-menu rules on .quick-toggle-menu bare.
- * ───────────────────────────────────────────────────────────────────────── */
+/* Generated by build/gen-stylesheet.js; run \`make stylesheet\`.
+ * Preserve stock popup geometry and scope overrides below their owning roots.
+ * Quick Settings submenus live outside .quick-settings. */
 `;
 }
 
 function sharedBlock() {
     return `
-/* ═══ 1. SHARED — one void, one type system, all palettes ═══════════════════ */
-
 #panel.modern-bar {
-    /* The shared void. Solid — identical to the fully-opaque kitty terminal
-     * background, so the bar reads seamless with the terminal on the day
-     * setup. Flat: no gradient, no border, no box-shadow (St renders shadows
-     * as re-blurred offscreen textures every repaint — the panel repaints
-     * ~1/sec with clock seconds; a real glow would cost GPU forever). */
+    /* Panel shadows create an offscreen texture on every repaint. */
     background-color: ${BG};
     border: none;
     box-shadow: none;
@@ -233,34 +134,28 @@ function sharedBlock() {
     font-size: 10.5pt;
 }
 
-/* Metrics cluster (left, where Activities was). */
 #panel.modern-bar .modern-bar-metrics {
     spacing: 14px;
     padding: 0 10px 0 6px;
 }
 
 #panel.modern-bar .modern-bar-metric {
-    font-weight: 400;                /* regular — a touch back up from 300 */
-    font-feature-settings: "tnum";   /* stop width jitter as digits change */
+    font-weight: 400;
+    font-feature-settings: "tnum";
 }
 
 #panel.modern-bar .modern-bar-weather-icon,
 #panel.modern-bar .modern-bar-metric-icon {
     icon-size: 15px;
-    padding-right: 4px;   /* the only glyph→number gap (labels have no leading space) */
+    padding-right: 4px;
 }
 
-/* Connection-lost marker, shown only while a metric is powered down (stale or
- * failing — the .modern-bar-stale state below). Smaller than the metric glyphs
- * so it reads as an annotation on the reading, not another reading. */
+/* Smaller than primary glyphs so this reads as an annotation. */
 #panel.modern-bar .modern-bar-stale-icon {
     icon-size: 11px;
     padding-left: 5px;
 }
 
-/* Every label/clock/indicator inherits the panel font; flat buttons — no
- * rounded pill background/outline in ANY state (state feedback is purely the
- * text/icon powering up to the palette's deep accent, set per palette). */
 #panel.modern-bar .panel-button {
     font-family: "JetBrains Mono", monospace;
     font-size: 10.5pt;
@@ -277,30 +172,26 @@ function sharedBlock() {
 #panel.modern-bar .panel-button:active,
 #panel.modern-bar .panel-button:checked {
     background-color: transparent !important;
-    box-shadow: none !important;   /* kill the stock inset-100px white pill */
+    box-shadow: none !important;
 }
 
 #panel.modern-bar .panel-button:focus {
     outline: none;
 }
 
-/* The clock: tabular figures; the stock theme paints its hover/active pill as
- * a box-shadow on the INNER .clock label (with radius 999px) — kill both. */
+/* Stock paints the clock pill on its inner label. */
 #panel.modern-bar .clock-display .clock {
     font-feature-settings: "tnum";
     border-radius: 0 !important;
     box-shadow: none !important;
 }
 
-/* Popup surfaces all sit on the same void as the panel. */
 .modern-bar-popups .quick-settings,
 .modern-bar-popups .datemenu-popover,
 .modern-bar-popups .modern-bar-popup .popup-menu-content {
     background-color: ${BG};
 }
 
-/* Our own metric dropdowns: we own this geometry (they're our widgets — the
- * recolor-only rule is for GNOME's popups, not these). */
 .modern-bar-popups .modern-bar-popup .popup-menu-content {
     padding: 14px 16px;
 }
@@ -311,40 +202,12 @@ function sharedBlock() {
     min-width: 180px;
 }
 
-/* ── Typeface for the GNOME dropdowns ───────────────────────────────────────
- * The panel and our own metric popups have always been JetBrains Mono; Quick
- * Settings and the calendar were left in the system face, which is why they
- * read as a different product bolted underneath the bar.
- *
- * This is the ONE place the recolor-only rule is deliberately widened, and only
- * to font-family. No font-size, no weight, no geometry: size is what stock uses
- * to compute tile and cell metrics, so changing it is how you get clipping
- * after a shell upgrade. Family alone still shifts text WIDTH, which is the
- * live risk here — JetBrains Mono is wider than Cantarell, so a long
- * title/subtitle pair ("Power Mode" / "Balanced") is the thing to check first
- * if a label starts ellipsising.
- *
- * Scoped to the three dropdown roots, never a bare .popup-menu-content: that
- * base is shared with the login screen, Looking Glass and modal dialogs. */
+/* Preserve stock sizes; the wider mono face may still ellipsize labels. */
 .modern-bar-popups .quick-settings,
 .modern-bar-popups .quick-toggle-menu,
 .modern-bar-popups .datemenu-popover {
     font-family: "JetBrains Mono", monospace;
 }
-
-/* Tile width — deliberately NOT overridden. JetBrains Mono is wider than
- * Cantarell, so the longest stock title ("Do Not Disturb") measures 12.14em
- * against stock's 12em cap (tools/qsprobe.js) and ellipsises to "Do Not
- * Distu…". A 13em cap was tried and reverted: it fixed that one title but not
- * a has-menu pill like Power Mode/Balanced, which wants 14.11em, so it bought
- * an inconsistent pane and a geometry exception in exchange for nothing.
- *
- * Abbreviating IS what GNOME does here — quickSettings.js sets
- * clutter_text.ellipsize = Pango.EllipsizeMode.END on the title, and the
- * 12em min = max is stock's uniform-tile mechanism. Deferring to it keeps the
- * pane's grid identical to every other GNOME install and leaves us with zero
- * geometry overrides on GNOME's own QS widgets, which is what lets a shell
- * upgrade move this layout without clipping us. */
 
 .modern-bar-popups .modern-bar-popup .modern-bar-popup-header {
     font-size: 8.5pt;
@@ -362,8 +225,7 @@ function sharedBlock() {
     padding-left: 12px;
 }
 
-/* Meter geometry. The fill's WIDTH is set in JS (St has no percentage
- * widths); keep the trough/fill heights in sync. */
+/* JS controls meter width because St lacks percentage widths. */
 .modern-bar-popups .modern-bar-popup .modern-bar-popup-meter {
     height: 3px;
     margin-top: 5px;
@@ -378,10 +240,7 @@ function sharedBlock() {
     padding-right: 8px;
 }
 
-/* Tail slot: a marked SECOND value after the main one (currently the forecast
- * rows' chance of rain). Smaller than the value it trails and set at the
- * resting weight, so it reads as an annotation rather than a competing figure —
- * the whole point is that it can't be mistaken for a third temperature. */
+/* Keep the marked second value subordinate to the primary value. */
 .modern-bar-popups .modern-bar-popup .modern-bar-popup-tail-icon {
     icon-size: 11px;
     padding-left: 12px;
@@ -409,17 +268,13 @@ function sharedBlock() {
 `;
 }
 
-// ── Per-palette: the panel ──────────────────────────────────────────────────
 function panelBlock(p) {
     const P = `#panel.modern-bar.modern-bar-${p.name}`;
     return `
-/* ── ${p.name}: panel ── */
-
 ${P} {
     color: ${p.rest};
 }
 
-/* Optional under-line (UNDERGLOW=false in extension.js by default). */
 ${P}.modern-bar-underglow {
     border-bottom: 2px solid ${p.deep};
 }
@@ -432,9 +287,7 @@ ${P} .panel-button {
     color: ${p.rest};
 }
 
-/* Power-up on hover: text/icon jump from resting dim to the deep accent. The
- * label and icon are children that don't inherit the box's hover color, so
- * they carry their own classes targeted directly. */
+/* Child icons and labels do not inherit every parent state. */
 ${P} .modern-bar-metric:hover .modern-bar-metric-label,
 ${P} .modern-bar-metric:hover .modern-bar-weather-icon,
 ${P} .modern-bar-metric:hover .modern-bar-metric-icon,
@@ -458,19 +311,13 @@ ${P} .clock-display:checked .clock {
     color: ${p.deep} !important;
 }
 
-/* Alert — the opposing faction's color, and the ONLY place it appears. Must
- * WIN over the hover rule above (same specificity, defined after), so an
- * over-threshold metric never loses its alert by being pointed at. */
+/* Later specificity keeps warnings visible through hover. */
 ${P} .modern-bar-alert,
 ${P} .modern-bar-metric:hover .modern-bar-metric-label.modern-bar-alert {
     color: ${p.alert};
 }
 
-/* Powered down — a metric whose reading is stale or whose fetches are failing
- * (.modern-bar-stale, set in JS). The circuit dims below rest: in the
- * rest/bright/deep liveness language, "no current". Beats the alert rule above
- * on specificity AND order, deliberately: a stale 100% must not blaze — data
- * we can't vouch for doesn't get to raise alarms. */
+/* Stale data suppresses alert color. */
 ${P} .modern-bar-metric.modern-bar-stale,
 ${P} .modern-bar-metric.modern-bar-stale .modern-bar-metric-label,
 ${P} .modern-bar-metric.modern-bar-stale .modern-bar-metric-label.modern-bar-alert,
@@ -480,9 +327,7 @@ ${P} .modern-bar-metric.modern-bar-stale .modern-bar-stale-icon {
     color: ${rgba(p.rest, 0.45)};
 }
 
-/* Hover still powers a stale metric up to the deep accent: the widget stays
- * clickable — opening its popup is the manual refresh — so the power-up is
- * the invitation. Last, to win over the dim rules above. */
+/* Stale metrics remain clickable for refresh. */
 ${P} .modern-bar-metric.modern-bar-stale:hover .modern-bar-metric-label,
 ${P} .modern-bar-metric.modern-bar-stale:hover .modern-bar-metric-icon,
 ${P} .modern-bar-metric.modern-bar-stale:hover .modern-bar-weather-icon,
@@ -492,19 +337,15 @@ ${P} .modern-bar-metric.modern-bar-stale:hover .modern-bar-stale-icon {
 `;
 }
 
-// ── Per-palette: Quick Settings + calendar dropdowns ───────────────────────
 function dropdownBlock(p) {
     const R = `.modern-bar-popups.modern-bar-${p.name}`;
     return `
-/* ── ${p.name}: Quick Settings + calendar dropdowns (recolor only) ── */
-
 ${R} .quick-settings,
 ${R} .datemenu-popover {
     border: 1px solid ${rgba(p.deep, 0.20)};
     color: ${p.rest};
 }
 
-/* Raised "card" surfaces: QS sub-menus and the calendar's info cards. */
 ${R} .quick-toggle-menu,
 ${R} .datemenu-popover .events-button,
 ${R} .datemenu-popover .world-clocks-button,
@@ -531,7 +372,6 @@ ${R} .message-list .message:active {
     background-color: ${rgba(p.deep, 0.16)};
 }
 
-/* Stacked notifications sit progressively deeper. */
 ${R} .message-list .message:second-in-stack {
     background-color: ${rgba(p.deep, 0.035)};
 }
@@ -539,24 +379,7 @@ ${R} .message-list .message:lower-in-stack {
     background-color: ${rgba(p.deep, 0.02)};
 }
 
-/* Interactive tiles — FILAMENT treatment.
- *
- * Rest carries NO fill and NO edge: an off toggle is the void with a label on
- * it. That is the whole idea — the previous pass washed every tile in
- * rgba(deep, 0.07), so ten pill tiles meant ten tinted slabs and the grid never
- * returned to the void. Design rule 8 says accent intensity scales inversely
- * with area; a resting wash is the largest-area accent in the whole theme.
- *
- * Feedback arrives only on interaction, and state is drawn as an EDGE, never a
- * slab (see the :checked block). This matches how the panel buttons already
- * behave (design rule 3: no highlight box in any state, the text powers up).
- *
- * Edges are inset box-shadows, never borders. A border would add to the box
- * and shift stock's centred content by its width — inset shadows draw inside
- * the existing geometry, which is what keeps this recolor-only.
- *
- * The calendar day cells are painted the surface grey by stock, so they're
- * neutralised in the calendar rules further down. */
+/* Inset shadows preserve stock geometry; resting controls stay transparent. */
 ${R} .quick-settings .quick-toggle,
 ${R} .quick-settings .icon-button,
 ${R} .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button,
@@ -570,9 +393,6 @@ ${R} .message-list .message-collapse-button {
     color: ${rgba(p.rest, 0.82)};
 }
 
-/* Hover is the only place a resting tile gains a fill, and it is deliberately
- * faint — enough to confirm the pointer is on a control (the tiles have no
- * resting edge to highlight), not enough to read as a slab. */
 ${R} .quick-settings .quick-toggle:hover,
 ${R} .quick-settings .icon-button:hover,
 ${R} .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:hover,
@@ -607,30 +427,8 @@ ${R} .datemenu-popover .events-button:insensitive {
     color: ${rgba(p.rest, 0.34)};
 }
 
-/* The "on" state — every one of these derives from -st-accent-color in stock,
- * so ALL must be restated or the missed ones keep the system accent.
- *
- * FILAMENT: no fill, state is a 2px lit ring on the pill edge plus deep text.
- * Full-saturation accent is fine here precisely because a hairline is a tiny
- * area (design rule 8) — the same colour across a 12em x 3.27em fill is the
- * wall of neon that rule exists to prevent. The ring reads as a circuit
- * carrying current, which is the thing being aimed at.
- *
- * ⚠ THE 4% WASH IS LOAD-BEARING, NOT DESIGN. St only PAINTS an inset
- * box-shadow when the node has a paintable background (or border): a fully
- * transparent background resolves the shadow but renders nothing. Found the
- * hard way on the first live test — every checked ring in the pane was
- * invisible, and the one ring that DID show was a focus ring, whose stock
- * rules happen to also set a background. Verified by pixel-probe
- * (tools/qspaint.js, 2026-07-29): four identical ring declarations, and only
- * the node with a background painted one. rgba(deep, 0.04) over the #04070d
- * void shifts each channel by ~2/255 — invisible, but it satisfies the paint
- * precondition. A border can't do this job: St borders add to the box and
- * would shift stock's centred content. DO NOT "clean up" the wash to
- * transparent; the ring goes with it.
- *
- * Text stays the DEEP accent, not the pale variant: pale sits a few points off
- * the resting colour and stops reading as a change at all. */
+/* Restate checked states to prevent system-accent bleed. St only paints inset
+ * shadows over a paintable background, so the neutral 4% wash is required. */
 ${R} .quick-settings .quick-toggle:checked,
 ${R} .quick-settings .quick-toggle:focus:checked,
 ${R} .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked,
@@ -640,8 +438,6 @@ ${R} .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:fo
     color: ${p.deep};
 }
 
-/* Hovering an already-on tile: the ring goes full strength and the faintest
- * wash appears, so on+hover is still distinguishable from on. */
 ${R} .quick-settings .quick-toggle:hover:checked,
 ${R} .quick-settings .quick-toggle:focus:hover:checked,
 ${R} .quick-settings .quick-toggle:active:checked,
@@ -657,8 +453,7 @@ ${R} .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:ac
     color: ${p.deep};
 }
 
-/* SMALL indicators only — solid fill earns its place because the area is tiny
- * (a switch, a 1.6em header icon, the brightness pips). */
+/* Solid accent is reserved for small indicators. */
 ${R} .quick-settings .keyboard-brightness-level .button:checked,
 ${R} .quick-toggle-menu .header .icon.active,
 ${R} .quick-toggle-menu .toggle-switch:checked,
@@ -667,7 +462,7 @@ ${R} .quick-toggle-menu .toggle-switch:checked:hover {
     color: ${BG};
 }
 
-/* Child labels/icons don't repaint from the parent in every state. */
+/* Child content does not inherit every checked color. */
 ${R} .quick-settings .quick-toggle:checked .quick-toggle-title,
 ${R} .quick-settings .quick-toggle:checked .quick-toggle-icon {
     color: ${p.deep};
@@ -676,19 +471,14 @@ ${R} .quick-settings .quick-toggle:checked .quick-toggle-subtitle {
     color: ${rgba(p.rest, 0.75)};
 }
 
-/* On but unavailable: the ring survives so state is still readable, dimmed to
- * match the text. (3% wash: same paint precondition as the checked block.) */
+/* The paintable wash keeps disabled rings visible. */
 ${R} .quick-settings .quick-toggle:insensitive:checked {
     background-color: ${rgba(p.deep, 0.03)};
     box-shadow: inset 0 0 0 2px ${rgba(p.deep, 0.28)};
     color: ${rgba(p.rest, 0.40)};
 }
 
-/* A has-menu pill is TWO actors in one rounded parent — ring the PARENT once
- * (per-half rings drew three stacked lines with the separator). Stock never
- * paints the parent AT ALL (it fills the halves), so without our wash the
- * parent has no background and the ring is skipped — this was exactly the
- * "Wired has no ring while Dark Style does" live bug. */
+/* Ring the parent once; per-half rings double the center seam. */
 ${R} .quick-settings .quick-toggle-has-menu:checked {
     background-color: ${rgba(p.deep, 0.04)};
     box-shadow: inset 0 0 0 2px ${rgba(p.deep, 0.85)};
@@ -700,26 +490,7 @@ ${R} .quick-settings .quick-toggle-has-menu:checked .quick-toggle-menu-button {
     box-shadow: none;
 }
 
-/* ── Never paint a HALF of a has-menu pill ─────────────────────────────────
- * Corollary of the parent-ring rule above, and the fix for the live "hovering
- * the arrow lights up the middle line weirdly" bug (2026-07-29).
- *
- * Any fill or ring on ONE half terminates exactly at the 1px separator, so the
- * fill edge and the separator render as a doubled vertical line down the
- * pill's centre. The rule above already avoids this for a checked PARENT;
- * these states were missed because they key off the HALF: :hover and :active
- * on either half, and the menu button's own :checked, which St sets while its
- * sub-menu is open — i.e. precisely the arrow-click path.
- *
- * So the wash moves to the parent (an St.Button, so it tracks :hover for the
- * whole pill — QuickSettingsItem extends St.Button, verified in the shell's
- * quickSettings.js), and the halves paint nothing. Per-half feedback survives
- * through CONTENT colour, set by the shared hover/active rules further up:
- * only the half under the pointer takes the deep accent, and colour has no
- * edge to seam against.
- *
- * :focus is deliberately EXCLUDED from the suppression list — a focus ring
- * must stay unmistakable (design rule 8 exempts it), and it is worth a seam. */
+/* Parent fills avoid a doubled center seam; focus remains on each half. */
 ${R} .quick-settings .quick-toggle-has-menu:hover {
     background-color: ${rgba(p.deep, 0.06)};
 }
@@ -740,8 +511,6 @@ ${R} .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:checked:ac
     box-shadow: none;
 }
 
-/* The divider between a has-menu pill's two halves. Dim at rest — with no tile
- * edges to relate to it would otherwise be the only line on an off tile. */
 ${R} .quick-settings .quick-toggle-has-menu .quick-toggle-separator {
     background-color: ${rgba(p.rest, 0.16)};
 }
@@ -749,8 +518,6 @@ ${R} .quick-settings .quick-toggle-has-menu:checked .quick-toggle-separator {
     background-color: ${rgba(p.deep, 0.55)};
 }
 
-/* Sliders — the fill is an St-specific property, the handle is plain color.
- * Handle rests at the pale fill color and brightens to fore on hover. */
 ${R} .quick-settings .slider,
 ${R} .quick-toggle-menu .slider {
     color: ${p.bright};
@@ -763,7 +530,6 @@ ${R} .quick-toggle-menu .slider:hover {
     color: ${p.fore};
 }
 
-/* QS sub-menu internals. */
 ${R} .quick-toggle-menu .header .icon {
     background-color: ${rgba(p.deep, 0.12)};
     color: ${p.rest};
@@ -790,8 +556,7 @@ ${R} .quick-toggle-menu .device-subtitle {
     color: ${rgba(p.rest, 0.38)};
 }
 
-/* Calendar: month grid. Stock paints days/headings/month-label the SURFACE
- * grey, so they must go transparent or the grid tiles grey. */
+/* Stock gives calendar cells an opaque surface background. */
 ${R} .calendar .calendar-day,
 ${R} .calendar .calendar-day-heading {
     background-color: transparent;
@@ -815,8 +580,7 @@ ${R} .calendar .calendar-day:active {
     color: ${p.deep};
 }
 
-/* Today: the one solid DEEP surface in the dropdown (small area, and the user
- * liked it) — stock forces the text color !important, so we must too. */
+/* Stock forces today's text color with !important. */
 ${R} .calendar .calendar-day.calendar-today,
 ${R} .calendar .calendar-day.calendar-today:hover,
 ${R} .calendar .calendar-day.calendar-today:focus,
@@ -845,8 +609,7 @@ ${R} .calendar .calendar-week-number {
     color: ${rgba(p.rest, 0.55)};
 }
 
-/* Date header + secondary text. The today-button's RESTING state is
- * :insensitive (it only becomes reactive once you select another day). */
+/* The today button rests in :insensitive until another date is selected. */
 ${R} .datemenu-today-button,
 ${R} .datemenu-today-button:insensitive {
     background-color: transparent;
@@ -880,7 +643,6 @@ ${R} .message-list .message .message-title {
     color: ${p.fore};
 }
 
-/* Notifications column. */
 ${R} .message-list:ltr {
     border-right-color: ${rgba(p.deep, 0.12)};
 }
@@ -896,7 +658,6 @@ ${R} .message-list .url-highlighter {
     link-color: ${p.deep};
 }
 
-/* Overlay scrollbar — scoped so it can't touch scrollbars elsewhere. */
 ${R} .datemenu-popover StScrollBar > .vhandle,
 ${R} .datemenu-popover StScrollBar > .hhandle {
     background-color: ${rgba(p.deep, 0.25)};
@@ -906,8 +667,7 @@ ${R} .datemenu-popover StScrollBar > .hhandle:hover {
     background-color: ${rgba(p.deep, 0.40)};
 }
 
-/* Focus rings — stock declares all of these inset+!important on the tile
- * EDGE; any one left un-restated is exactly the accent edge-bleed bug. */
+/* Match stock !important so the system accent cannot bleed through. */
 ${R} .quick-settings .quick-toggle:focus,
 ${R} .quick-settings .quick-toggle:focus:checked,
 ${R} .quick-settings .icon-button:focus,
@@ -934,14 +694,7 @@ ${R} .message-list-controls .message-list-clear-button:focus {
     box-shadow: inset 0 0 0 2px ${rgba(p.deep, 0.80)} !important;
 }
 
-/* Paint-wash for focus rings on VOID-RESTING controls. Same St precondition
- * as the checked block: an inset shadow is only painted over a paintable
- * background, and filament leaves these controls fully transparent at rest —
- * so a keyboard-focus ring on them would silently not render, which is an
- * accessibility failure ("focus rings must stay unmistakable", design rules).
- * Deliberately EXCLUDES the nodes that already have real backgrounds — the
- * cards (events/world-clocks/weather/message, .quick-toggle-menu) and the
- * calendar today-circle — where this wash would REPLACE a stronger fill. */
+/* Transparent nodes do not paint inset shadows; exclude stronger existing fills. */
 ${R} .quick-settings .quick-toggle:focus,
 ${R} .quick-settings .icon-button:focus,
 ${R} .quick-settings .quick-toggle-has-menu .quick-toggle-menu-button:focus,
@@ -962,12 +715,9 @@ ${R} .message-list-controls .message-list-clear-button:focus {
 `;
 }
 
-// ── Per-palette: our own metric dropdowns ───────────────────────────────────
 function metricPopupBlock(p) {
     const R = `.modern-bar-popups.modern-bar-${p.name} .modern-bar-popup`;
     return `
-/* ── ${p.name}: metric dropdowns (our widgets) ── */
-
 ${R} .popup-menu-content {
     border: 1px solid ${rgba(p.deep, 0.20)};
 }
@@ -1008,9 +758,7 @@ ${R} .modern-bar-popup-icon {
     color: ${p.rest};
 }
 
-/* Tail (chance of rain): deliberately DIMMER than the value it trails. It is
- * supplementary — a row without it is the normal case, and it must not pull the
- * eye off the temperatures. */
+/* Keep the optional tail subordinate to the primary value. */
 ${R} .modern-bar-popup-tail-icon,
 ${R} .modern-bar-popup-tail {
     color: ${rgba(p.rest, 0.65)};
@@ -1026,10 +774,7 @@ ${R} .modern-bar-popup-separator {
 `;
 }
 
-// ── palette-preview.html (dev-only eyeball page) ────────────────────────────
-// One row per faction: a mock panel strip, a mock metric popup, and the raw
-// ladder. Not pixel-faithful to St — it exists to judge HUES side by side
-// without a logout. Real ground truth is tools/theme-probe.js.
+// This browser preview compares roles; St probes remain authoritative.
 function previewHtml() {
     const rows = PALETTES.map(p => `
   <section class="row">
@@ -1070,7 +815,7 @@ function previewHtml() {
     </div>
   </section>`).join('\n');
 
-    return `<!-- GENERATED by build/gen-stylesheet.js — regenerate, don't edit -->
+    return `<!-- Generated by build/gen-stylesheet.js; regenerate, don't edit. -->
 <meta charset="utf-8">
 <title>modern-bar circuit palettes</title>
 <style>
@@ -1108,11 +853,7 @@ ${rows}
 `;
 }
 
-// ── Emit ────────────────────────────────────────────────────────────────────
-
-// `--list` prints the palette roster as JSON (name/label/lore) — prefs.js and
-// probes are hand-written against the schema, but this keeps a scriptable
-// cross-check that all three agree (workflow/CI use).
+// Machine-readable roster for schema and preference checks.
 if (ARGV.includes('--list')) {
     print(JSON.stringify(PALETTES.map(({name, label, lore}) => ({name, label, lore}))));
     System.exit(0);
@@ -1123,11 +864,7 @@ validate();
 
 let css = header() + sharedBlock();
 css += `
-/* ═══ 2. CIRCUIT PALETTES ═══════════════════════════════════════════════════
- * One block per canon palette, generated from the same template — selector
- * sets are IDENTICAL across palettes by construction. The palette class goes
- * on BOTH #panel and Main.uiGroup (popups are siblings of panelBox, so one
- * node can never cover both — see extension.js). */
+/* Palette classes cover both #panel and uiGroup because the nodes are siblings. */
 `;
 for (const p of PALETTES)
     css += panelBlock(p) + dropdownBlock(p) + metricPopupBlock(p);
