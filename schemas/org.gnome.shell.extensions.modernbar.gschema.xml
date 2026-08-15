@@ -148,8 +148,8 @@
       <description>Master toggle for the Claude 5-hour usage indicator. Off by
         default: this metric reads the OAuth token Claude Code stores in
         ~/.claude/.credentials.json and sends it to Anthropic's usage endpoint,
-        so it only ever runs after being explicitly enabled. While off, nothing
-        is read and no request is made.</description>
+        so it only ever runs after being explicitly enabled. While off, the
+        credential file is not opened and no request is made.</description>
     </key>
 
     <key name="claude-refresh-seconds" type="i">
@@ -164,11 +164,6 @@
         "gone".</description>
     </key>
 
-    <!-- Cache so a cold start shows the last known number IMMEDIATELY instead of
-         a blank panel. Not exposed in prefs; written by the metric on success.
-         Without this, any throttled/failed first fetch after login means the
-         metric is simply absent, which is far worse than a slightly stale number
-         (the popup shows the true age, so nothing is hidden from the user). -->
     <key name="claude-cache-percent" type="i">
       <range min="-1" max="1000"/>
       <default>-1</default>
@@ -179,8 +174,8 @@
     <key name="claude-cache-time" type="x">
       <default>0</default>
       <summary>Unix time of the cached utilization</summary>
-      <description>Epoch seconds. The cache is ignored once older than an hour,
-        since the 5-hour window will have moved on. Internal; not in prefs.</description>
+      <description>Epoch seconds. Readings older than an hour remain visible but
+        render as stale. Internal; not in prefs.</description>
     </key>
 
     <key name="claude-warn-percent" type="i">
@@ -188,6 +183,47 @@
       <default>80</default>
       <summary>Claude usage warning threshold (percent)</summary>
       <description>At or above this 5-hour utilization %, the value flares Clu-orange.</description>
+    </key>
+
+    <!-- ── Codex usage metric ─────────────────────────────────────────── -->
+    <key name="show-codex" type="b">
+      <default>false</default>
+      <summary>Show the Codex usage metric (opt-in)</summary>
+      <description>Master toggle for Codex account usage. Off by default: this
+        metric reads the ChatGPT access token and account ID Codex stores in
+        ~/.codex/auth.json and sends them only to ChatGPT's usage endpoint.
+        While off, the credential file is not opened and no request is
+        made.</description>
+    </key>
+
+    <key name="codex-refresh-seconds" type="i">
+      <range min="30" max="3600"/>
+      <default>60</default>
+      <summary>Codex usage refresh interval (seconds)</summary>
+      <description>How often to query account usage. Failures keep the last
+        value and retry with backoff.</description>
+    </key>
+
+    <key name="codex-cache-percent" type="i">
+      <range min="-1" max="1000"/>
+      <default>-1</default>
+      <summary>Last known Codex utilization (cache)</summary>
+      <description>-1 = no cached value. Internal; not shown in prefs.</description>
+    </key>
+
+    <key name="codex-cache-time" type="x">
+      <default>0</default>
+      <summary>Unix time of the cached Codex utilization</summary>
+      <description>Epoch seconds. Readings older than an hour remain visible but
+        render as stale. Internal; not in prefs.</description>
+    </key>
+
+    <key name="codex-warn-percent" type="i">
+      <range min="50" max="100"/>
+      <default>80</default>
+      <summary>Codex usage warning threshold (percent)</summary>
+      <description>At or above this utilization, the displayed window flares
+        Clu-orange.</description>
     </key>
 
   </schema>
