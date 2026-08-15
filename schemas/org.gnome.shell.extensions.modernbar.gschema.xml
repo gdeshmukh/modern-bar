@@ -4,7 +4,6 @@
           path="/org/gnome/shell/extensions/modernbar/"
           gettext-domain="modernbar@gdesh.com">
 
-    <!-- ── Palette (canon circuitry colors) ───────────────────────────────── -->
     <key name="palette" type="s">
       <choices>
         <choice value="tron"/>
@@ -55,7 +54,6 @@
         left alone.</description>
     </key>
 
-    <!-- ── Workday metric ─────────────────────────────────────────────── -->
     <key name="work-start" type="s">
       <default>'09:00'</default>
       <summary>Work day start time</summary>
@@ -74,7 +72,6 @@
       <description>Master toggle for the Workday percentage indicator.</description>
     </key>
 
-    <!-- ── Weather metric ─────────────────────────────────────────────── -->
     <key name="location-label" type="s">
       <default>'Cupertino'</default>
       <summary>Location display/search name</summary>
@@ -120,7 +117,6 @@
       <description>Master toggle for the weather indicator.</description>
     </key>
 
-    <!-- ── CPU metric ─────────────────────────────────────────────────── -->
     <key name="show-cpu" type="b">
       <default>true</default>
       <summary>Show the CPU % metric</summary>
@@ -141,7 +137,6 @@
       <description>At or above this CPU %, the value flares Clu-orange as an alert.</description>
     </key>
 
-    <!-- ── Claude usage metric ────────────────────────────────────────── -->
     <key name="show-claude" type="b">
       <default>false</default>
       <summary>Show the Claude usage metric (opt-in)</summary>
@@ -185,7 +180,6 @@
       <description>At or above this 5-hour utilization %, the value flares Clu-orange.</description>
     </key>
 
-    <!-- ── Codex usage metric ─────────────────────────────────────────── -->
     <key name="show-codex" type="b">
       <default>false</default>
       <summary>Show the Codex usage metric (opt-in)</summary>

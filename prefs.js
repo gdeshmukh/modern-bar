@@ -1,22 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-// modern-bar — prefs.js
-//
-// The preferences window shown by the Extensions app (the gear icon) and by
-// `gnome-extensions prefs modernbar@gdesh.com`. Everything here writes to the
-// GSettings schema; the running extension reads the same keys live.
-//
-// GNOME 45+ style: libadwaita, ES modules. Production rules this file holds
-// itself to (the extension is headed for extensions.gnome.org):
-//
-//  - Spin ranges are DERIVED from the schema (`_schemaRange`), never restated.
-//    A hand-copied range already bit us once: the UI clamped 15→30 and, being a
-//    two-way binding, wrote the clamp back over the user's real value.
-//  - Every user-visible string goes through gettext (`_`), so the window is
-//    translatable the moment a locale/ dir exists.
-//  - Every settings signal connected here is disconnected on close-request —
-//    prefs windows come and go; the Gio.Settings they watch does not.
-//  - Per-metric rows grey out while that metric's master switch (in the group
-//    header) is off, so the window itself shows what is inert.
+// Libadwaita preferences bound to the extension's GSettings schema.
 
 import Adw from 'gi://Adw';
 import Gtk from 'gi://Gtk';
@@ -30,18 +13,16 @@ export default class ModernBarPreferences extends ExtensionPreferences {
     fillPreferencesWindow(window) {
         const settings = this.getSettings();
 
-        // One list of undo-thunks per window; run once when it closes.
+        // Gio.Settings outlives each preferences window.
         const cleanup = [];
         const track = (id) => cleanup.push(() => settings.disconnect(id));
         window.connect('close-request', () => {
             cleanup.forEach(f => f());
             cleanup.length = 0;
-            return false;   // let the window close normally
+            return false;
         });
 
-        // One Soup session per window for the geocoder, aborted with the
-        // window — otherwise every Apply click leaks a session to GC and a
-        // late reply can land after close.
+        // Late geocoder replies must not outlive the window.
         this._geocodeSession = new Soup.Session({timeout: 10});
         cleanup.push(() => {
             this._geocodeSession.abort();
@@ -54,21 +35,14 @@ export default class ModernBarPreferences extends ExtensionPreferences {
         window.add(this._buildAboutPage(settings, window));
     }
 
-    // ── Shared builders ─────────────────────────────────────────────────────
-
-    // [lower, upper] from the schema's own <range>. The schema stays the single
-    // source of truth; a missing range is a programming error we want loud.
+    // Two-way bindings would persist limits copied incorrectly from the schema.
     _schemaRange(settings, key) {
-        // get_range() returns ('range', <(lo, hi)>); recursiveUnpack (a GJS
-        // add-on, so camelCase — deep_unpack would leave the inner variant
-        // wrapped) unwraps to a plain [lo, hi].
         const [type, value] = settings.settings_schema.get_key(key).get_range().recursiveUnpack();
         if (type !== 'range')
             throw new Error(`Schema key ${key} declares no <range>`);
         return value;
     }
 
-    // SpinRow bound two-way to an int/double key, range read from the schema.
     _spinRow(settings, key, {title, subtitle = null, step = 1, digits = 0}) {
         const [lower, upper] = this._schemaRange(settings, key);
         const row = new Adw.SpinRow({
@@ -83,8 +57,6 @@ export default class ModernBarPreferences extends ExtensionPreferences {
         return row;
     }
 
-    // A PreferencesGroup whose header carries the metric's master switch.
-    // Rows added through `addRow` grey out while the switch is off.
     _metricGroup(settings, showKey, props) {
         const group = new Adw.PreferencesGroup(props);
         const toggle = new Gtk.Switch({
@@ -103,8 +75,6 @@ export default class ModernBarPreferences extends ExtensionPreferences {
         return [group, addRow];
     }
 
-    // Valid values of an enum-ish string key, from the schema's own <choices>
-    // (same single-source-of-truth rule as the spin ranges).
     _schemaChoices(settings, key) {
         const [type, values] =
             settings.settings_schema.get_key(key).get_range().recursiveUnpack();
@@ -113,7 +83,6 @@ export default class ModernBarPreferences extends ExtensionPreferences {
         return values;
     }
 
-    // ── Page 1: Appearance ──────────────────────────────────────────────────
     _buildAppearancePage(settings, track) {
         const page = new Adw.PreferencesPage({
             title: _('Appearance'),
@@ -127,9 +96,7 @@ export default class ModernBarPreferences extends ExtensionPreferences {
         });
         page.add(group);
 
-        // Display name + lore per schema value. Anything the schema adds that
-        // this table doesn't know yet still shows (as its raw name) rather
-        // than breaking the row.
+        // Unknown schema values still need a usable label.
         const info = {
             tron: [_('Tron'), _('Blue — fights for the Users')],
             iso: [_('ISO'), _('White — the ISOs and the Users')],
@@ -157,10 +124,7 @@ export default class ModernBarPreferences extends ExtensionPreferences {
         };
         syncFromKey();
         paletteRow.connect('notify::selected', () => {
-            // Equality guard on every widget→key write in this file: a write
-            // of the CURRENT value is not always a no-op — on a freshly reset
-            // (unset) key it re-creates a user value and emits changed::, so
-            // an unguarded echo here would quietly dirty "Reset all".
+            // Equal writes recreate user values on unset keys.
             if (settings.get_string('palette') !== values[paletteRow.selected])
                 settings.set_string('palette', values[paletteRow.selected]);
             syncLore();
@@ -168,9 +132,6 @@ export default class ModernBarPreferences extends ExtensionPreferences {
         track(settings.connect('changed::palette', syncFromKey));
         group.add(paletteRow);
 
-        // Popups are styled from stock GNOME selectors that can shift between
-        // shell releases, so they get their own switch — turn this off and the
-        // dropdowns fall back to stock Adwaita without touching the panel.
         const popupRow = new Adw.SwitchRow({
             title: _('Theme the dropdowns'),
             subtitle: _('Apply the palette to Quick Settings and the ' +
@@ -179,8 +140,6 @@ export default class ModernBarPreferences extends ExtensionPreferences {
         settings.bind('theme-popups', popupRow, 'active', Gio.SettingsBindFlags.DEFAULT);
         group.add(popupRow);
 
-        // Behaviour, not colour, so it says plainly what it does NOT change —
-        // the worry with any dismissal tweak is losing click-outside or Escape.
         const leaveRow = new Adw.SwitchRow({
             title: _('Close dropdowns on mouse away'),
             subtitle: _('Quick Settings and the clock/calendar menu close when ' +
@@ -193,7 +152,6 @@ export default class ModernBarPreferences extends ExtensionPreferences {
         return page;
     }
 
-    // ── Page 2: Metrics ─────────────────────────────────────────────────────
     _buildMetricsPage(settings, window, track) {
         const page = new Adw.PreferencesPage({
             title: _('Metrics'),
@@ -237,8 +195,6 @@ export default class ModernBarPreferences extends ExtensionPreferences {
         const endRow = this._timeRow(settings, 'work-end', _('End time'), track);
         addRow(endRow);
 
-        // A start ≥ end range is stored faithfully but renders nothing (the
-        // metric hides) — say so where the mistake is being made.
         const validate = () => {
             const [sh, sm] = this._parseHHMM(settings.get_string('work-start'));
             const [eh, em] = this._parseHHMM(settings.get_string('work-end'));
@@ -251,9 +207,6 @@ export default class ModernBarPreferences extends ExtensionPreferences {
         track(settings.connect('changed::work-end', validate));
     }
 
-    // A row with two spinners (hour 0–23, minute 0–59) bound to an "HH:MM"
-    // key. Syncs BOTH ways: spinning writes the key; an external write (dconf,
-    // scripts) moves the spinners.
     _timeRow(settings, key, title, track) {
         const row = new Adw.ActionRow({title});
 
@@ -273,9 +226,7 @@ export default class ModernBarPreferences extends ExtensionPreferences {
         };
         sync();
 
-        // Equality-guarded (see the palette row): a same-value write only
-        // no-ops when a user value exists; on an unset key it would re-create
-        // one and re-fire changed::.
+        // Equal writes recreate user values on unset keys.
         const commit = () => {
             const hh = String(hour.get_value_as_int()).padStart(2, '0');
             const mm = String(min.get_value_as_int()).padStart(2, '0');
@@ -309,7 +260,6 @@ export default class ModernBarPreferences extends ExtensionPreferences {
         });
         page.add(group);
 
-        // Location: type a name, press Apply (⏎) to geocode → lat/lon.
         const locRow = new Adw.EntryRow({
             title: _('Location'),
             show_apply_button: true,
@@ -327,9 +277,7 @@ export default class ModernBarPreferences extends ExtensionPreferences {
         }));
         addRow(locRow);
 
-        // Coordinates: normally geocode output, but directly editable so the
-        // metric can be configured with the geocoding service unreachable (or
-        // without sending a place name anywhere at all).
+        // Manual coordinates keep weather usable without geocoding.
         const coordRow = new Adw.ExpanderRow({
             title: _('Coordinates'),
             subtitle: this._coordText(settings),
@@ -345,8 +293,7 @@ export default class ModernBarPreferences extends ExtensionPreferences {
         track(settings.connect('changed::longitude', syncCoords));
         addRow(coordRow);
 
-        // Unit. Wind/precip units in the dropdown follow this too (°F ⇒
-        // mph/inch, °C ⇒ km/h/mm) — deliberately not more settings.
+        // Wind follows the same metric or customary unit choice.
         const unitRow = new Adw.ComboRow({
             title: _('Temperature unit'),
             model: new Gtk.StringList({
@@ -379,11 +326,10 @@ export default class ModernBarPreferences extends ExtensionPreferences {
         return `${lat}, ${lon}`;
     }
 
-    // Geocode a place name via Open-Meteo's free geocoding API, async.
     _geocode(name, settings, window) {
         const session = this._geocodeSession;
         if (!session)
-            return;   // window already closed
+            return;
         const url = 'https://geocoding-api.open-meteo.com/v1/search?' +
             `name=${encodeURIComponent(name)}&count=1&language=en&format=json`;
         const msg = Soup.Message.new('GET', url);
@@ -413,7 +359,7 @@ export default class ModernBarPreferences extends ExtensionPreferences {
         try {
             window.add_toast(new Adw.Toast({title: text, timeout: 3}));
         } catch (e) {
-            // window already closed — nothing to tell anyone
+            // The window may close before the reply arrives.
         }
     }
 
@@ -488,7 +434,6 @@ export default class ModernBarPreferences extends ExtensionPreferences {
         }));
     }
 
-    // ── Page 3: About ───────────────────────────────────────────────────────
     _buildAboutPage(settings, window) {
         const page = new Adw.PreferencesPage({
             title: _('About'),
@@ -537,7 +482,7 @@ export default class ModernBarPreferences extends ExtensionPreferences {
                 try {
                     launcher.launch_finish(res);
                 } catch (e) {
-                    // portal refused / no handler — not worth a dialog
+                    // Launch failures do not block preferences.
                 }
             });
         });
@@ -562,14 +507,10 @@ export default class ModernBarPreferences extends ExtensionPreferences {
     }
 
     _resetAll(settings) {
-        // night-mode first, deterministically: resetting it can fire the
-        // extension's alias handler, and doing that BEFORE palette resets
-        // means any write it makes is cleared by the palette reset below —
-        // rather than depending on list_keys() hash order.
+        // Reset the alias first so its signal cannot leave a derived palette.
         settings.reset('night-mode');
         for (const key of settings.settings_schema.list_keys()) {
-            // The usage cache is state, not preference — wiping it would blank
-            // the panel number for no user benefit.
+            // Usage caches are state, not preferences.
             if (key.endsWith('-cache-percent') ||
                 key.endsWith('-cache-time') || key === 'night-mode')
                 continue;

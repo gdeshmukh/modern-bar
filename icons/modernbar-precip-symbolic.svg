@@ -1,17 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg height="16px" viewBox="0 0 16 16" width="16px" xmlns="http://www.w3.org/2000/svg">
-    <!-- Chance-of-precipitation marker for the weather dropdown's forecast rows.
-         Bundled rather than taken from the icon theme: the only droplet-bearing
-         Adwaita symbolics are weather-showers*, which are cloud-with-rain glyphs
-         that would clash with the row's own weather icon beside it.
-
-         NB: this comment must stay INSIDE <svg>. With it above the root element,
-         gdk-pixbuf's SVG loader fails to sniff the format at all ("couldn't
-         recognize the image file format") and the icon renders blank — the other
-         bundled icons have no leading comment, which is how that got caught.
-
-         Fill is #222222 like the other bundled symbolics; St recolors symbolic
-         icons from CSS, so the literal value never shows. -->
+    <!-- Keep comments inside the root; a leading comment breaks GdkPixbuf SVG
+         detection. The standalone droplet avoids duplicating the weather glyph. -->
     <g fill="#222222">
         <path d="M 8 1.5 C 8 1.5 3.25 7.4 3.25 10.05 C 3.25 12.75 5.38 14.5 8 14.5 C 10.62 14.5 12.75 12.75 12.75 10.05 C 12.75 7.4 8 1.5 8 1.5 Z M 8 3.9 C 9.35 5.72 11.25 8.55 11.25 10.05 C 11.25 11.92 9.79 13 8 13 C 6.21 13 4.75 11.92 4.75 10.05 C 4.75 8.55 6.65 5.72 8 3.9 Z"/>
     </g>
