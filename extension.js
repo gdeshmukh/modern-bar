@@ -31,15 +31,16 @@ export default class ModernBarExtension extends Extension {
         if (UNDERGLOW)
             Main.panel.add_style_class_name(UNDERGLOW_CLASS);
 
+        const schema = this._settings.settings_schema;
+        this._settingsIds = [
+            this._settings.connect('changed::theme-popups', () => this._syncPopupClass()),
+        ];
+
         // Missing compiled keys make get_key() fatal, so stale schemas degrade.
-        if (!this._settings.settings_schema.has_key('palette')) {
+        if (!schema.has_key('palette')) {
             console.error('modern-bar: compiled schema is stale (no "palette" ' +
                 'key) — run `make schemas`; palette theming disabled');
             this._paletteNames = [];
-            this._settingsIds = [
-                this._settings.connect('changed::theme-popups', () => this._syncPopupClass()),
-            ];
-            this._syncPopupClass();
         } else {
             this._paletteNames = this._schemaChoices('palette');
 
@@ -49,10 +50,9 @@ export default class ModernBarExtension extends Extension {
                 this._settings.set_string('palette', 'clu');
 
             this._syncPaletteClass();
-            this._syncPopupClass();
             // Equal writes to unset GSettings keys still emit changed::.
             this._lastNightMode = this._settings.get_boolean('night-mode');
-            this._settingsIds = [
+            this._settingsIds.push(
                 this._settings.connect('changed::palette', () => this._syncPaletteClass()),
                 // Keep the legacy theme-switching key usable.
                 this._settings.connect('changed::night-mode', () => {
@@ -64,10 +64,9 @@ export default class ModernBarExtension extends Extension {
                     // Avoid recreating a user value after reset.
                     if (this._settings.get_string('palette') !== mapped)
                         this._settings.set_string('palette', mapped);
-                }),
-                this._settings.connect('changed::theme-popups', () => this._syncPopupClass()),
-            ];
+                }));
         }
+        this._syncPopupClass();
 
         // Other shell code retains references, so hide and collapse instead.
         const activities = Main.panel.statusArea.activities;
@@ -81,7 +80,6 @@ export default class ModernBarExtension extends Extension {
                     this._activitiesActor.hide();
                     this._activitiesActor.width = 0;
                 });
-            this._activitiesHidden = true;
         }
 
         this._metricsBox = new St.BoxLayout({
@@ -107,7 +105,7 @@ export default class ModernBarExtension extends Extension {
         Main.panel._leftBox.insert_child_at_index(this._metricsBox, 0);
 
         // Stale compiled schemas make missing-key access fatal.
-        if (this._settings.settings_schema.has_key('dismiss-on-leave'))
+        if (schema.has_key('dismiss-on-leave'))
             this._menuDismiss = new MenuProximityDismiss(this._settings);
     }
 
@@ -172,7 +170,7 @@ export default class ModernBarExtension extends Extension {
         Main.uiGroup.remove_style_class_name(POPUP_CLASS);
         this._settings = null;
 
-        if (this._activitiesHidden && this._activitiesActor &&
+        if (this._activitiesActor &&
             !this._activitiesActor.is_finalized?.()) {
             if (this._activitiesShownId)
                 this._activitiesActor.disconnect(this._activitiesShownId);
@@ -181,7 +179,6 @@ export default class ModernBarExtension extends Extension {
         }
         this._activitiesShownId = null;
         this._activitiesActor = null;
-        this._activitiesHidden = false;
 
         Main.panel.remove_style_class_name(UNDERGLOW_CLASS);
         Main.panel.remove_style_class_name(PANEL_CLASS);

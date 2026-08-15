@@ -230,8 +230,9 @@ export default class ModernBarPreferences extends ExtensionPreferences {
         const commit = () => {
             const hh = String(hour.get_value_as_int()).padStart(2, '0');
             const mm = String(min.get_value_as_int()).padStart(2, '0');
-            if (settings.get_string(key) !== `${hh}:${mm}`)
-                settings.set_string(key, `${hh}:${mm}`);
+            const value = `${hh}:${mm}`;
+            if (settings.get_string(key) !== value)
+                settings.set_string(key, value);
         };
         hour.connect('value-changed', commit);
         min.connect('value-changed', commit);
@@ -339,15 +340,16 @@ export default class ModernBarPreferences extends ExtensionPreferences {
                 const bytes = sess.send_and_read_finish(res);
                 const text = new TextDecoder().decode(bytes.get_data());
                 const data = JSON.parse(text);
-                const r = data?.results?.[0];
-                if (!r) {
+                const result = data?.results?.[0];
+                if (!result) {
                     this._toast(window, _('No match for “%s”.').format(name));
                     return;
                 }
-                settings.set_string('location-label', r.name);
-                settings.set_double('latitude', r.latitude);
-                settings.set_double('longitude', r.longitude);
-                const where = [r.name, r.admin1, r.country].filter(Boolean).join(', ');
+                settings.set_string('location-label', result.name);
+                settings.set_double('latitude', result.latitude);
+                settings.set_double('longitude', result.longitude);
+                const where = [result.name, result.admin1, result.country]
+                    .filter(Boolean).join(', ');
                 this._toast(window, _('Location set to %s.').format(where));
             } catch (e) {
                 this._toast(window, _('Could not look up that location.'));
